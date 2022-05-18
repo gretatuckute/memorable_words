@@ -12,12 +12,12 @@ Load expt2 data and rename/reorder the columns.
 
 
 ## SETTINGS ##
-save = False
+save = True
 
 fname = "../1_GET_DATA/exp2_data_with_norms.csv"
-fname_accs1 = "../exp2_subject_splits/accs1.csv"
-fname_accs2 = "../exp2_subject_splits/accs2.csv"
-fname_word_order = "../exp2_subject_splits/word_order_pos.txt" # take POS into account
+fname_accs1 = "../expt2_subject_splits/accs1.csv"
+fname_accs2 = "../expt2_subject_splits/accs2.csv"
+fname_word_order = "../expt2_subject_splits/word_order_pos.txt" # take POS into account
 
 if __name__ == '__main__':
 
@@ -129,7 +129,7 @@ if __name__ == '__main__':
 		d.to_csv(f"exp2_data_with_norms_reordered_gt_{date_tag}.csv")
 	
 	if save:
-		acc1.to_csv(f'exp2_subject_splits/exp2_accs1_{date_tag}.csv') # with removed words
-		acc2.to_csv(f'exp2_subject_splits/exp2_accs2_{date_tag}.csv') # with removed words
+		acc1.to_csv(f'../expt2_subject_splits/exp2_accs1_{date_tag}.csv') # with removed words
+		acc2.to_csv(f'../expt2_subject_splits/exp2_accs2_{date_tag}.csv') # with removed words
 		
 	

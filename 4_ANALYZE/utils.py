@@ -19,9 +19,7 @@ plt.rcParams['svg.fonttype'] = 'none'
 now = datetime.now()
 date_tag = now.strftime("%Y%m%d")
 np.random.seed(0)
-
-RESULTDIR = '../expt1_results/'
-print(f'RESULTDIR: {RESULTDIR}')
+numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
 
 RESULT_subdirs = ['data_with_preprocessed_cols_used_for_analyses',
 				  '0_subject_consistency',
@@ -33,16 +31,9 @@ RESULT_subdirs = ['data_with_preprocessed_cols_used_for_analyses',
 				  'corr_predictors',
 				  'posthoc_bootstrap']
 
-print(f'Checking whether the directory {RESULTDIR} exists & relevant subdirectories are created...')
-if not os.path.exists(RESULTDIR):
-	os.makedirs(RESULTDIR)
-	print(f'Directory {RESULTDIR} created.')
-
-# Make subdirectories
-for subdir in RESULT_subdirs:
-	if not os.path.exists(RESULTDIR + subdir):
-		os.makedirs(RESULTDIR + subdir, exist_ok=True)
-		print(f'Directory {RESULTDIR + subdir} created.')
+RESULT_subfolders = ['cv_all_preds', # cross-validated model performance, across all cross-validation splits
+					 'cv_summary_preds', # summary of cross-validated model performance
+					 'full_summary'] # summary of model fitted on all data (i.e., not cross-validated)
 
 ### DICT RESOURCES ###
 d_model_name_predictors = {'meanings_human': ['num_meanings_human'],
@@ -80,6 +71,103 @@ rename_dict_expt2_inv = {v: k for k, v in rename_dict_expt2.items()}
 
 
 ### FUNCTIONS ###
+def create_result_directories(result_dir: str,
+							  subdirs: list,
+							  subfolders: list):
+	"""
+	Create directories for saving results.
+
+	Args:
+		result_dir (str): directory to save results
+		subdirs (list): list of subdirectories to be created
+		subfolders (list): list of subfolders to be created for result subdirectories that contain model outputs
+
+	Returns:
+		None
+
+	"""
+	
+	print(f'Checking whether the directory {result_dir} exists & relevant subdirectories are created...\n')
+	if not os.path.exists(result_dir):
+		os.makedirs(result_dir)
+		print(f'Directory {result_dir} created.')
+	
+	# Make subdirectories
+	for subdir in subdirs:
+		if not os.path.exists(result_dir + subdir):
+			os.makedirs(result_dir + subdir, exist_ok=True)
+			print(f'Directory {result_dir + subdir} created.')
+	
+	for subdir in subdirs:
+		# If the subdirectory starts with a number (besides 0 and 1), create subdirectories for output from linear models
+		if subdir[0] in ['2', '3', '4']:  # subdirectories containing model results
+			for subfolder in subfolders:
+				if not os.path.exists(result_dir + subdir + '/' + subfolder):
+					os.makedirs(result_dir + subdir + '/' + subfolder, exist_ok=True)
+					print(f'Directory {result_dir + subdir + "/" + subfolder} created.')
+					
+					
+def load_data_expt1(fname: str,
+					fname_accs1: str,
+					fname_accs2: str,
+					fname_word_order: str, ):
+	"""
+	Load data for experiment 1.
+
+	The data consists of:
+	d: dataframe with all data, aggregated across subjects
+	acc1: dataframe with accuracy data for half of the subjects
+	acc2: dataframe with accuracy data for the other half of the subjects
+
+	Ensure that these files are ordered in the same way.
+
+	Args:
+		fname (str): path to data file containing all data (words, i.e., items as rows, accuracy metrics and predictors as columns)
+		fname_accs1 (str): path to data file containing accuracy metrics for the accuracies of half of the subjects
+						   (rows are subject splits, columns are words)
+		fname_accs2 (str): path to data file containing accuracy metrics for the accuracies of the other half of the subjects
+						   (rows are subject splits, columns are words)
+		fname_word_order (str): path to file containing the order of the words in fname_accs1 and fname_accs2.
+								For asserting that ordering is correct.
+
+	Returns:
+		d (dataframe): dataframe with all data, aggregated across subjects
+		d_predictors (dataframe): dataframe with predictors as columns only
+		acc1 (dataframe): dataframe with accuracy data for half of the subjects, reordered to match d
+		acc2 (dataframe): dataframe with accuracy data for the other half of the subjects, reordered to match d
+
+	"""
+	
+	d = pd.read_csv(fname).drop(columns=['Unnamed: 0'])
+	
+	all_predictors = ['# meanings (human)', '# synonyms (human)', '# meanings (Wordnet)', '# synonyms (Wordnet)',
+					  'Log Subtlex frequency', 'Log Subtlex CD',
+					  'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence', 'GloVe distinctiveness', ]
+	
+	d_predictors = d[all_predictors]
+	
+	## Load/prep CV data ##
+	# Each single row is accuracy for half of the participants, and columns are words
+	acc1 = pd.read_csv(fname_accs1).drop(columns=['Unnamed: 0'])
+	acc2 = pd.read_csv(fname_accs2).drop(columns=['Unnamed: 0'])
+	num_splits = acc1.shape[0]
+	num_words = acc1.shape[1]
+	print(f'Data for experiment 1 has {num_splits} splits, {num_words} words')
+	
+	# Read in word order text file
+	word_order = pd.read_csv(fname_word_order, header=None)
+	word_order_lower = word_order[0].str.lower()
+	
+	# Assert that word order txt file matches with the accs csv files
+	assert (len(np.intersect1d(acc1.columns.values, word_order_lower.values)) == acc1.shape[1])
+	
+	# Sort accs by words
+	acc1 = acc1[d.word_lower.values]
+	acc2 = acc2[d.word_lower.values]
+	
+	return d, d_predictors, acc1, acc2
+
+
 def rename_predictors(df: pd.DataFrame,
 					  rename_dict: dict):
 	"""
@@ -163,6 +251,7 @@ def get_cv_score(df: pd.DataFrame,
 				 random_seed: int = 0,
 				 return_CI_summary_df: bool = True,
 				 save: bool = True,
+				 result_dir: str = '',
 				 save_subfolder: typing.Union[bool, str] = False):
 	"""
     Get cross-validation score by splitting across words (items).
@@ -194,6 +283,7 @@ def get_cv_score(df: pd.DataFrame,
 		random_seed (int): random seed for the permutation if permute is True
         return_CI_summary_df (bool): if True, return a dataframe with the CI summary and not the values per split (1000 iterations)
 		save (bool): if True, save the results to a csv file; save BOTH the dataframe with the CI summary and the values per split (1000 iterations)
+		result_dir (str): directory to save the results to
 		save_subfolder (str): subfolder to save the results to (if save is True)
 
     Returns:
@@ -349,7 +439,7 @@ def get_cv_score(df: pd.DataFrame,
 		df_save['permute'] = [permute] * len(df_save)
 		df_save['formula'] = [formula] * len(df_save)
 		
-		df_save.to_csv(f'{RESULTDIR}/{save_subfolder + "/" if save_subfolder else ""}/'
+		df_save.to_csv(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
 					   f'cv_all_preds/'
 					   f'df_cv-all_NAME-{model_name}_demeanx-{demean_x}_demeany-{demean_y}_permute-{permute}_{date_tag}.csv')
 	
@@ -365,7 +455,7 @@ def get_cv_score(df: pd.DataFrame,
 			df_save['demean_y'] = [demean_y] * len(df_save)
 			df_save['permute'] = [permute] * len(df_save)
 			
-			df_save.to_csv(f'{RESULTDIR}/{save_subfolder + "/" if save_subfolder else ""}/'
+			df_save.to_csv(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
 						   f'cv_summary_preds/'
 						   f'df_cv-summary_NAME-{model_name}_demeanx-{demean_x}_demeany-{demean_y}_permute-{permute}_{date_tag}.csv')
 	
@@ -425,6 +515,7 @@ def obtain_CI(df: pd.DataFrame,
 
 
 def compute_acc_metrics_with_error(df: pd.DataFrame,
+								   result_dir: str = '',
 								   save_subfolder: str = None,
 								   save_str: str = None,
 								   error_type: str = 'CI',
@@ -437,6 +528,7 @@ def compute_acc_metrics_with_error(df: pd.DataFrame,
 	
 	Args:
 		df (pd.DataFrame): dataframe with columns 'acc', 'hit.rate', 'false.alarm.rate'
+		result_dir (str): directory to save results
 		save_subfolder (str): subfolder to save the dataframe
 		save_str (str): string to save the dataframe
 		error_type (str): options: 'CI'
@@ -462,17 +554,18 @@ def compute_acc_metrics_with_error(df: pd.DataFrame,
 								  'false.alarm.rate': fa_rate_ci})
 		df_acc_ci.index = [f'lower_CI{CI_bound_lower}', f'median_CI50', f'upper_CI{CI_bound_upper}']
 		
-		df_acc_ci.to_csv(f'{RESULTDIR}/{save_subfolder + "/" if save_subfolder else ""}/'
-						 f'{save_str}.csv')
-		print(f'Saved accuracy metrics using {error_type} CI to {RESULTDIR}/'
+		df_acc_ci.to_csv(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
+						 f'{save_str}_{date_tag}.csv')
+		print(f'Saved accuracy metrics using {error_type} {CI} to {result_dir}'
 			  f'{save_subfolder + "/" if save_subfolder else ""}/'
-			  f'{save_str}.csv')
+			  f'{save_str}_{date_tag}.csv')
 
 
 def get_split_half_subject_consistency(df: pd.DataFrame,
 									   acc1: pd.DataFrame,
 									   acc2: pd.DataFrame,
 									   save: bool = False,
+									   result_dir: str = '',
 									   save_subfolder: str = '',
 									   CI: int = 95, ):
 	"""
@@ -483,6 +576,7 @@ def get_split_half_subject_consistency(df: pd.DataFrame,
 		acc1 (pd.DataFrame): dataframe with accuracy per word for subject split 1
 		acc2 (pd.DataFrame): dataframe with accuracy per word for subject split 2
 		save (bool): whether to save results to csv
+		result_dir (str): directory to save results
 		save_subfolder (str): subfolder to save results in
 		CI (int): confidence interval to compute
 
@@ -513,10 +607,10 @@ def get_split_half_subject_consistency(df: pd.DataFrame,
 										f'median_CI50_spearman': [median_spearman],
 										f'upper_CI{CI_bound_upper}_spearman': [high_spearman_CI]})
 	if save:
-		df_subject_split_CI.to_csv(f'{RESULTDIR}/'
+		df_subject_split_CI.to_csv(f'{result_dir}/'
 								   f'{save_subfolder}/'
 								   f'subject_split_CI_{date_tag}.csv')
-		print(f'Subject split half correlation CI saved to {RESULTDIR}/'
+		print(f'Subject split half correlation CI saved to {result_dir}/'
 			  f'{save_subfolder}/'
 			  f'subject_split_CI_{date_tag}.csv')
 
@@ -595,6 +689,7 @@ def get_cv_score_w_stepwise_regression(df: pd.DataFrame,
 									   random_seed: int = 0,
 									   return_CI_summary_df: bool = True,
 									   save: bool = True,
+									   result_dir: str = '',
 									   save_subfolder: typing.Union[str, None] = ''):
 	"""
     Get cross-validation score by splitting across words (items).
@@ -620,6 +715,7 @@ def get_cv_score_w_stepwise_regression(df: pd.DataFrame,
 		random_seed (int): random seed for the permutation if permute is True
         return_CI_summary_df (bool): if True, return a dataframe with the CI summary and not the values per split (1000 iterations)
 		save (bool): if True, save the results to a csv file
+		result_dir (str): directory to save the results to
 		save_subfolder (str): subfolder to save the results to (if save is True)
 
     Returns:
@@ -757,7 +853,7 @@ def get_cv_score_w_stepwise_regression(df: pd.DataFrame,
 		df_save['permute'] = [permute] * len(df_save)
 		df_save['included_features'] = included_features_across_splits
 		
-		df_save.to_csv(f'{RESULTDIR}/{save_subfolder + "/" if save_subfolder else ""}/'
+		df_save.to_csv(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
 					   f'cv_all_preds/'
 					   f'df_cv-all_NAME-{model_name}_demeanx-{demean_x}_demeany-{demean_y}_permute-{permute}_{date_tag}.csv')
 	
@@ -779,17 +875,45 @@ def get_cv_score_w_stepwise_regression(df: pd.DataFrame,
 			freq_feature_list = u[argmax_c]
 			df_save['most_occurring_included_feature_list'] = [freq_feature_list] * len(df_save)
 			
-			df_save.to_csv(f'{RESULTDIR}/{save_subfolder + "/" if save_subfolder else ""}/'
+			df_save.to_csv(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
 						   f'cv_summary_preds/'
 						   f'df_cv-summary_NAME-{model_name}_demeanx-{demean_x}_demeany-{demean_y}_permute-{permute}_{date_tag}.csv')
-			print(f'Saved stepwise df to: {RESULTDIR}/{save_subfolder + "/" if save_subfolder else ""}/'
+			print(f'Saved stepwise df to: {result_dir}/{save_subfolder + "/" if save_subfolder else ""}'
 				  f'cv_summary_preds/'
 				  f'df_cv-summary_NAME-{model_name}_demeanx-{demean_x}_demeany-{demean_y}_permute-{permute}_{date_tag}.csv')
 	
 	return df_save, included_features_across_splits
 
 
-def bootstrap_wrapper(save_subfolder1: str,
+def most_frequent_models(included_features_across_splits: list,
+						 num_models_to_report: int = 5,):
+	"""
+	Find the most frequently occurring models across all splits
+
+	Args:
+		included_features_across_splits (list): list of lists of included features
+		num_models_to_report (int): number of models to report
+
+	Returns:
+		df_most_frequent_models (pd.DataFrame): dataframe with the most frequent models and how many times they occur
+	"""
+	
+	u, c = np.unique(included_features_across_splits, return_counts=True)
+	
+	# Get the most frequent model (based on the number of times it was included), second most frequent, etc.
+	most_frequent_models = u[np.argsort(c)[::-1][:num_models_to_report]]
+	most_frequent_models_counts = c[np.argsort(c)[::-1][:num_models_to_report]]
+	
+	# package into df
+	df_most_frequent_models = pd.DataFrame(
+		{'model': most_frequent_models,
+		 'count': most_frequent_models_counts})
+	
+	return df_most_frequent_models
+
+
+def bootstrap_wrapper(result_dir: str,
+					  save_subfolder1: str,
 					  save_subfolder2: str,
 					  model1: str,
 					  model2: str,
@@ -817,12 +941,12 @@ def bootstrap_wrapper(save_subfolder1: str,
 	"""
 	
 	# Loop into the save subfolder of interest, and fetch the CV prediction values for model 1 and model 2
-	df_cv_all_model1 = pd.read_csv(f'{RESULTDIR}/'
+	df_cv_all_model1 = pd.read_csv(f'{result_dir}/'
 								   f'{save_subfolder1}/'
 								   f'cv_all_preds/'
 								   f'df_cv-all_NAME-{model1}_demeanx-{demeanx}_demeany-{demeany}_permute-False_{datetag}.csv')
 	
-	df_cv_all_model2 = pd.read_csv(f'{RESULTDIR}/'
+	df_cv_all_model2 = pd.read_csv(f'{result_dir}/'
 								   f'{save_subfolder2}/'
 								   f'cv_all_preds/'
 								   f'df_cv-all_NAME-{model2}_demeanx-{demeanx}_demeany-{demeany}_permute-False_{datetag}.csv')
@@ -848,10 +972,10 @@ def bootstrap_wrapper(save_subfolder1: str,
 						'n_bootstrap', 'demeanx', 'demeany', 'val_of_interest', 'datetag']
 		df_stats = df_stats[cols_reorder]
 		
-		df_stats.to_csv(f'{RESULTDIR}/'
+		df_stats.to_csv(f'{result_dir}/'
 						f'posthoc_boostrap/'
 						f'boostrap-{n_bootstrap}_{model1}-{model2}_{datetag}.csv')
-		print(f'Saved stats file to {RESULTDIR}/'
+		print(f'Saved stats file to {result_dir}/'
 			  f'posthoc_boostrap/'
 			  f'boostrap-{n_bootstrap}_{model1}-{model2}_{datetag}.csv')
 
@@ -919,6 +1043,7 @@ def acc_vs_predictor(df: pd.DataFrame,
 					 predictor: str,
 					 normalization_setting: str = '',
 					 save: bool = True,
+					 result_dir: str = '',
 					 save_subfolder: str = '',
 					 rename_dict_inv: dict = {},
 					 graphic_setting: str = 'big', ):
@@ -930,6 +1055,7 @@ def acc_vs_predictor(df: pd.DataFrame,
 		predictor (str): predictor to plot on x-axis
 		normalization_setting (str): normalization setting to plot on x-axis
 		save (bool): whether to save the plot
+		result_dir (str): directory to save the plot
 		save_subfolder (str): subfolder to save the plot
 		rename_dict_inv (dict): dictionary to rename the predictor for titles
 		graphic_setting (str): graphic setting, options are: 'normal', 'big'
@@ -1008,38 +1134,39 @@ def acc_vs_predictor(df: pd.DataFrame,
 		plt.xticks(xticks, labels=[str(x) for x in np.round(xticks)])
 		plt.yticks(yticks)
 		plt.title(f'Accuracy vs. {rename_dict_inv[predictor]}', fontsize=30)
-		plt.tight_layout()
-		plt.show()
+
 	else:
 		raise ValueError('graphic_setting should be either normal or big')
 	
 	plt.title(f'Accuracy vs. {rename_dict_inv[predictor]}', fontsize=22)
 	plt.tight_layout()
 	if save:
-		plt.savefig(f'{RESULTDIR}/{save_subfolder + "/" if save_subfolder else ""}/'
+		plt.savefig(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
 					f'acc_vs_{predictor}{normalization_setting}_{date_tag}.png', dpi=120)
-		plt.savefig(f'{RESULTDIR}/{save_subfolder + "/" if save_subfolder else ""}/'
+		plt.savefig(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
 					f'acc_vs_{predictor}{normalization_setting}_{date_tag}.svg', dpi=72)
 	plt.show()
 
 
 def plot_full_heatmap(df: pd.DataFrame,
 					  title: str = 'Correlation heatmap',
+					  result_dir: str = '',
 					  save_subfolder: str = '',
 					  save_str: str = 'corr_heatmap',
-					  save: bool = False):
+					  save: bool = False,):
 	"""Correlate the input df with itself, and plot the result as a heatmap
 
 	Args:
 		df (pd.DataFrame): dataframe to be correlated
 		title (str): title of the plot
+		result_dir (str): directory to save the plot in
 		save_subfolder (str): subfolder to save the plot in
 		save_str (str): string to be added to the file name
 		save (bool): whether to save the plot
 	"""
 	
-	if not join(RESULTDIR, save_subfolder):
-		os.mkdir(join(RESULTDIR, save_subfolder))
+	if not join(result_dir, save_subfolder):
+		os.mkdir(join(result_dir, save_subfolder))
 		print(f'Created directory {save_subfolder}')
 	
 	plt.figure(figsize=(12, 12))
@@ -1049,7 +1176,7 @@ def plot_full_heatmap(df: pd.DataFrame,
 	plt.tight_layout(pad=2)
 	plt.title(title, fontsize=14)
 	if save:
-		plt.savefig(f'{RESULTDIR}/{save_subfolder}/{save_str}_{date_tag}.png', dpi=180)
-		plt.savefig(f'{RESULTDIR}/{save_subfolder}/{save_str}_{date_tag}.svg', dpi=180)
-		df.corr().to_csv(f'{RESULTDIR}/{save_subfolder}/{save_str}_{date_tag}.csv')
+		plt.savefig(f'{result_dir}/{save_subfolder}/{save_str}_{date_tag}.png', dpi=180)
+		plt.savefig(f'{result_dir}/{save_subfolder}/{save_str}_{date_tag}.svg', dpi=180)
+		df.corr().to_csv(f'{result_dir}/{save_subfolder}/{save_str}_{date_tag}.csv')
 	plt.show()

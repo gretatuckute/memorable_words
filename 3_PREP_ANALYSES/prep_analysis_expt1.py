@@ -14,9 +14,9 @@ Load expt1 data (after the GloVe extraction) and rename/reorder the columns.
 save = True
 
 fname = "../2_OBTAIN_GLOVE/exp1_data_with_norms_w_glove.csv"
-fname_accs1 = "exp1_subject_splits/accs1.csv"
-fname_accs2 = "exp1_subject_splits/accs2.csv"
-fname_word_order = "exp1_subject_splits/word_order.txt"
+fname_accs1 = "../expt1_subject_splits/accs1.csv"
+fname_accs2 = "../expt1_subject_splits/accs2.csv"
+fname_word_order = "../expt1_subject_splits/word_order.txt"
 
 if __name__ == '__main__':
 
@@ -80,5 +80,5 @@ if __name__ == '__main__':
 	accs2.columns = accs_word_order_str_new
 	
 	if save:
-		accs1.to_csv(f'../exp1_subject_splits/exp1_accs1_{date_tag}.csv') # with removed words
-		accs2.to_csv(f'../exp1_subject_splits/exp1_accs2_{date_tag}.csv') # with removed words
+		accs1.to_csv(f'../expt1_subject_splits/exp1_accs1_{date_tag}.csv') # with removed words
+		accs2.to_csv(f'../expt1_subject_splits/exp1_accs2_{date_tag}.csv') # with removed words
