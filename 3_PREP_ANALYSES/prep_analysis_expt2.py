@@ -112,7 +112,7 @@ if __name__ == '__main__':
 	acc1.columns = accs_word_order['word_lower']
 	acc2.columns = accs_word_order['word_lower']
 
-	# Exclude the ones that were are not present in d['word_lower'] (57 total)
+	# Exclude the ones that were are not present in d['word_lower'] (57 total) and reorder
 	acc1 = acc1[d['word_lower'].values]
 	acc2 = acc2[d['word_lower'].values]
 	
@@ -129,7 +129,7 @@ if __name__ == '__main__':
 		d.to_csv(f"exp2_data_with_norms_reordered_gt_{date_tag}.csv")
 	
 	if save:
-		acc1.to_csv(f'../expt2_subject_splits/exp2_accs1_{date_tag}.csv') # with removed words
-		acc2.to_csv(f'../expt2_subject_splits/exp2_accs2_{date_tag}.csv') # with removed words
+		acc1.to_csv(f'../expt2_subject_splits/exp2_accs1_{date_tag}.csv') # with removed and reordered words
+		acc2.to_csv(f'../expt2_subject_splits/exp2_accs2_{date_tag}.csv') # with removed and reordered words
 		
 	

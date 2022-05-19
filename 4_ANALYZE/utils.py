@@ -69,6 +69,12 @@ rename_dict_expt2 = {'# meanings (human)': 'num_meanings_human',
 rename_dict_expt1_inv = {v: k for k, v in rename_dict_expt1.items()}
 rename_dict_expt2_inv = {v: k for k, v in rename_dict_expt2.items()}
 
+d_predictors = {'expt1': ['# meanings (human)', '# synonyms (human)', '# meanings (Wordnet)', '# synonyms (Wordnet)',
+					  'Log Subtlex frequency', 'Log Subtlex CD',
+					  'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence', 'GloVe distinctiveness', ],
+				'expt2': ['# meanings (human)', '# synonyms (human)', 'Google n-gram frequency',
+					  'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence']}
+
 
 ### FUNCTIONS ###
 def create_result_directories(result_dir: str,
@@ -107,19 +113,18 @@ def create_result_directories(result_dir: str,
 					print(f'Directory {result_dir + subdir + "/" + subfolder} created.')
 					
 					
-def load_data_expt1(fname: str,
-					fname_accs1: str,
-					fname_accs2: str,
-					fname_word_order: str, ):
+def load_data(fname: str,
+			fname_accs1: str,
+			fname_accs2: str,):
 	"""
-	Load data for experiment 1.
+	Load data.
 
 	The data consists of:
 	d: dataframe with all data, aggregated across subjects
 	acc1: dataframe with accuracy data for half of the subjects
 	acc2: dataframe with accuracy data for the other half of the subjects
-
-	Ensure that these files are ordered in the same way.
+	
+	Assertions performed to ensure match among files.
 
 	Args:
 		fname (str): path to data file containing all data (words, i.e., items as rows, accuracy metrics and predictors as columns)
@@ -127,12 +132,9 @@ def load_data_expt1(fname: str,
 						   (rows are subject splits, columns are words)
 		fname_accs2 (str): path to data file containing accuracy metrics for the accuracies of the other half of the subjects
 						   (rows are subject splits, columns are words)
-		fname_word_order (str): path to file containing the order of the words in fname_accs1 and fname_accs2.
-								For asserting that ordering is correct.
 
 	Returns:
 		d (dataframe): dataframe with all data, aggregated across subjects
-		d_predictors (dataframe): dataframe with predictors as columns only
 		acc1 (dataframe): dataframe with accuracy data for half of the subjects, reordered to match d
 		acc2 (dataframe): dataframe with accuracy data for the other half of the subjects, reordered to match d
 
@@ -140,32 +142,19 @@ def load_data_expt1(fname: str,
 	
 	d = pd.read_csv(fname).drop(columns=['Unnamed: 0'])
 	
-	all_predictors = ['# meanings (human)', '# synonyms (human)', '# meanings (Wordnet)', '# synonyms (Wordnet)',
-					  'Log Subtlex frequency', 'Log Subtlex CD',
-					  'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence', 'GloVe distinctiveness', ]
-	
-	d_predictors = d[all_predictors]
-	
 	## Load/prep CV data ##
 	# Each single row is accuracy for half of the participants, and columns are words
 	acc1 = pd.read_csv(fname_accs1).drop(columns=['Unnamed: 0'])
 	acc2 = pd.read_csv(fname_accs2).drop(columns=['Unnamed: 0'])
 	num_splits = acc1.shape[0]
 	num_words = acc1.shape[1]
-	print(f'Data for experiment 1 has {num_splits} splits, {num_words} words')
+	print(f'Data have {num_splits} splits, {num_words} words.\n')
 	
-	# Read in word order text file
-	word_order = pd.read_csv(fname_word_order, header=None)
-	word_order_lower = word_order[0].str.lower()
+	assert (len(np.unique(d.word_lower.values)) == acc1.shape[1])
+	assert ((d.word_lower.values) == acc1.columns.values).all()
+	assert (acc1.columns.values == acc2.columns.values).all()
 	
-	# Assert that word order txt file matches with the accs csv files
-	assert (len(np.intersect1d(acc1.columns.values, word_order_lower.values)) == acc1.shape[1])
-	
-	# Sort accs by words
-	acc1 = acc1[d.word_lower.values]
-	acc2 = acc2[d.word_lower.values]
-	
-	return d, d_predictors, acc1, acc2
+	return d, acc1, acc2
 
 
 def rename_predictors(df: pd.DataFrame,

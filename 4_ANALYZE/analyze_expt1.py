@@ -15,10 +15,9 @@ posthoc_stats = False
 save = True
 np.random.seed(0)
 
-fname = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_gt_20211220.csv"
-fname_accs1 = "../expt1_subject_splits/exp1_accs1_20211220.csv"
-fname_accs2 = "../expt1_subject_splits/exp1_accs2_20211220.csv"
-fname_word_order = "../expt1_subject_splits/word_order.txt"
+fname = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_gt_20220519.csv"
+fname_accs1 = "../expt1_subject_splits/exp1_accs1_20220519.csv"
+fname_accs2 = "../expt1_subject_splits/exp1_accs2_20220519.csv"
 
 if __name__ == '__main__':
 	
@@ -30,10 +29,10 @@ if __name__ == '__main__':
 								  subfolders=RESULT_subfolders)
 		
 	## Load data ##
-	d, d_predictors, acc1, acc2 = load_data_expt1(fname=fname,
-												  fname_accs1=fname_accs1,
-												  fname_accs2=fname_accs2,
-												  fname_word_order=fname_word_order)
+	d, acc1, acc2 = load_data(fname=fname,
+							fname_accs1=fname_accs1,
+							fname_accs2=fname_accs2,)
+	d_predictors = d[d_predictors['expt1']] # Obtain df with predictors only
 	
 	if plot_heatmap: # Plot heatmap of predictor correlations
 		plot_full_heatmap(df=d_predictors,

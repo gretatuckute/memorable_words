@@ -73,12 +73,30 @@ if __name__ == '__main__':
 	# First exclude the deleted words from the accs_word_order_str
 	accs_word_order_str_new = [x for x in accs_word_order_str if x not in excluded_words]
 	
-	accs1 = acc1.loc[:, cols_to_exclude]
-	accs1.columns = accs_word_order_str_new
+	acc1_with_excluded_words = acc1.loc[:, cols_to_exclude]
+	acc1_with_excluded_words.columns = accs_word_order_str_new
 	
-	accs2 = acc2.loc[:, cols_to_exclude]
-	accs2.columns = accs_word_order_str_new
+	acc2_with_excluded_words = acc2.loc[:, cols_to_exclude]
+	acc2_with_excluded_words.columns = accs_word_order_str_new
+	
+	# Assert that word order txt file matches with the accs csv files
+	
+	# Read in word order text file anew to ensure that no variables were manipulated incorrectly
+	word_order = pd.read_csv(fname_word_order, header=None)
+	word_order_lower = word_order[0].str.lower()
+	
+	# Assert that word order txt file matches with the accs csv files
+	assert (len(np.intersect1d(acc1_with_excluded_words.columns.values, word_order_lower.to_list())) == acc1_with_excluded_words.shape[1])
+	assert (len(np.intersect1d(acc1_with_excluded_words.columns.values, accs_word_order_str_new)) == acc1_with_excluded_words.shape[1])
+	
+	# Next, reorder the words (columns) so that d and the accs files match up
+	accs1 = acc1_with_excluded_words[d.word_lower.values]
+	accs2 = acc2_with_excluded_words[d.word_lower.values]
+	
+	assert(len(np.unique(accs1.columns)) == len(np.unique(accs2.columns)))
+	assert (np.unique(accs1.columns) == np.unique(d['word_lower'])).all()
+	assert (np.unique(accs2.columns) == np.unique(d['word_lower'])).all()
 	
 	if save:
-		accs1.to_csv(f'../expt1_subject_splits/exp1_accs1_{date_tag}.csv') # with removed words
-		accs2.to_csv(f'../expt1_subject_splits/exp1_accs2_{date_tag}.csv') # with removed words
+		accs1.to_csv(f'../expt1_subject_splits/exp1_accs1_{date_tag}.csv') # with removed and reordered words
+		accs2.to_csv(f'../expt1_subject_splits/exp1_accs2_{date_tag}.csv') # with removed and reordered words
