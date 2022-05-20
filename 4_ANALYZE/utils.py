@@ -317,7 +317,8 @@ def get_cv_score(df: pd.DataFrame,
 		subject_split_half_spearman_r.append(r_spearman_subject_split)
 		
 		# Randomly pick item (word) train/test indices
-		train_words_idxs = np.random.choice(num_words, size=num_words_train, replace=False)
+		np.random.seed(0)
+		train_words_idxs = np.random.choice(num_words, size=num_words_train, replace=False, )
 		test_words_idxs = np.setdiff1d(np.arange(num_words), train_words_idxs)
 		
 		assert (len(np.unique(
@@ -491,7 +492,7 @@ def obtain_CI(df: pd.DataFrame,
 		
 		CI_lst.append([lower_CI, median, upper_CI])
 		col_names.append([f'lower_CI{CI_bound_lower}_{val.split("_")[-2]}',
-						  f'median_CI50{val.split("_")[-2]}',
+						  f'median_CI50_{val.split("_")[-2]}',
 						  f'upper_CI{CI_bound_upper}_{val.split("_")[-2]}'])
 	
 	CI_lst_flat = [item for sublist in CI_lst for item in sublist]
@@ -743,6 +744,7 @@ def get_cv_score_w_stepwise_regression(df: pd.DataFrame,
 		s2 = acc2.iloc[i]
 		
 		# Randomly pick train/test indices
+		np.random.seed(0)
 		train_words_idxs = np.random.choice(num_words, size=num_words_train, replace=False)
 		test_words_idxs = np.setdiff1d(np.arange(num_words), train_words_idxs)
 		
@@ -1058,7 +1060,7 @@ def acc_vs_predictor(df: pd.DataFrame,
 		if predictor == 'glove_distinctiveness':
 			x_limit_offset = 0.02
 	elif normalization_setting == '_zscore' or normalization_setting == '_demean':
-		x_limit_offset = [0.2 if predictor not in ['num_meanings_wordnet', 'num_synonyms_wordnet'] else 1]
+		x_limit_offset = [0.5 if predictor not in ['num_meanings_wordnet', 'num_synonyms_wordnet', 'google_ngram_freq'] else 1.3]
 	else:
 		x_limit_offset = 0.1
 	
@@ -1095,7 +1097,7 @@ def acc_vs_predictor(df: pd.DataFrame,
 		plt.yticks(yticks)
 	
 	elif graphic_setting == 'big':
-		sns.set(style="ticks", font_scale=2.5, rc={"grid.linewidth": 1,
+		sns.set(style="ticks", font_scale=2.6, rc={"grid.linewidth": 1,
 												   'grid.alpha': 0,  # no grid
 												   "ytick.major.size": 10,
 												   }, )  # 'figure.figsize':(12,12)
@@ -1103,37 +1105,38 @@ def acc_vs_predictor(df: pd.DataFrame,
 		xticks = np.linspace(x_min, x_max, 3).ravel()
 		yticks = np.linspace(0.6, 1, 3).ravel()
 		
-		plt.figure(figsize=(10, 10))
+		fig, ax = plt.subplots(figsize=(7, 7))
+		ax.set_box_aspect(1)
 		plt.xlim(x_min, x_max)
-		plt.ylim(0.6, 1)
-		sns.scatterplot(x=f'{predictor}{normalization_setting}', y=f'acc', data=df, s=270, alpha=0.3,
+		plt.ylim(0.55, 1)
+		sns.scatterplot(x=f'{predictor}{normalization_setting}', y=f'acc', data=df, s=230, alpha=0.3,
 						color='black', linewidth=0,
 						)
 		# Add r value and plot best fit line
 		r = df.corr()[f'{predictor}{normalization_setting}']['acc']
-		plt.text(0.88, 0.94, f'r={r:.2f}', horizontalalignment='center', verticalalignment='center',
+		plt.text(0.9, 1.04, f'r={r:.2f}', horizontalalignment='center', verticalalignment='center',
 				 transform=plt.gca().transAxes, fontsize=32)
 		# Plot linear line with think line
 		sns.regplot(x=f'{predictor}{normalization_setting}', y=f'acc', data=df, color='red',
 					scatter=False, x_ci='ci', ci=95, n_boot=1000,  # use sns default CI bootstrap
 					line_kws={'linewidth': 8},
 					truncate=True, )
-		plt.ylabel('Accuracy')
-		plt.xlabel(rename_dict_inv[predictor])  # get key from rename dict
+		plt.ylabel(None)  # ('Accuracy')
+		plt.xlabel(None)  # (rename_dict_inv[predictor])  # get key from rename dict
 		plt.xticks(xticks, labels=[str(x) for x in np.round(xticks)])
 		plt.yticks(yticks)
-		plt.title(f'Accuracy vs. {rename_dict_inv[predictor]}', fontsize=30)
+		# plt.title(f'Accuracy vs. {rename_dict_inv[predictor]}', fontsize=30)
 
 	else:
 		raise ValueError('graphic_setting should be either normal or big')
 	
-	plt.title(f'Accuracy vs. {rename_dict_inv[predictor]}', fontsize=22)
+	# plt.title(f'Accuracy vs. {rename_dict_inv[predictor]}', fontsize=22)
 	plt.tight_layout()
 	if save:
 		plt.savefig(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
 					f'acc_vs_{predictor}{normalization_setting}_{date_tag}.png', dpi=120)
 		plt.savefig(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
-					f'acc_vs_{predictor}{normalization_setting}_{date_tag}.svg', dpi=72)
+					f'acc_vs_{predictor}{normalization_setting}_{date_tag}.svg', dpi=32,)
 	plt.show()
 
 
