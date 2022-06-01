@@ -2,6 +2,8 @@
 data/.DS_Store
 .idea
 
+figure_compilation/**
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
