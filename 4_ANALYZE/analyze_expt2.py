@@ -1,9 +1,6 @@
 from utils import *
 
 ## SETTINGS ##
-plot_heatmap = False
-plot_predictors_corr = True
-
 Q0 = False # subject consistency
 Q1 = False # accuracy metrics
 Q2 = False # all baseline models
@@ -32,15 +29,6 @@ if __name__ == '__main__':
 	d, acc1, acc2 = load_data(fname=fname,
 							fname_accs1=fname_accs1,
 							fname_accs2=fname_accs2,)
-	d_predictors = d[d_predictors['expt2']] # Obtain df with predictors only
-	
-	if plot_heatmap: # Plot heatmap of predictor correlations
-		plot_full_heatmap(df=d_predictors,
-						  title='Expt 2: Pearson correlation of norms',
-						  result_dir=RESULTDIR,
-						  save_subfolder='corr_heatmaps',
-						  save_str='expt2_corr_predictors_full_heatmap',
-						  save=save,)
 		
 	if Q1: # Obtain accuracy metrics (accuracy, hit rate, false alarm rate with CI error)
 		compute_acc_metrics_with_error(df=d,
@@ -77,20 +65,6 @@ if __name__ == '__main__':
 				  f'data_with_preprocessed_cols_used_for_analyses/'
 				  f'{fname.split("/")[-1].split(".")[0]}_preprocessed_cols.csv')
 	
-	if plot_predictors_corr:
-		# For each predictor, plot the correlation with the acc across all data points
-		for normalization_setting in ['', '_demean', '_zscore']:
-		# normalization_setting = '' # _demean, _zscore or ''
-		
-			for predictor in all_predictors_renamed:
-				acc_vs_predictor(df=df,
-								 predictor=predictor,
-								 normalization_setting=normalization_setting,
-								 save=True,
-								 result_dir=RESULTDIR,
-								 save_subfolder='corr_predictors',
-								 rename_dict_inv=rename_dict_expt2_inv)
-
 	#### RUN MODELS ####
 
 	# Create variables based on all data (no train/test CV splits)

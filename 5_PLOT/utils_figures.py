@@ -1,9 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import seaborn as sns
 from scipy.stats import pearsonr, spearmanr
 from scipy import stats
@@ -11,77 +8,196 @@ from datetime import datetime
 from tqdm import tqdm
 import os
 from os.path import join
-from scipy.stats import zscore
 import typing
+
+from resources_figures import *
 
 plt.rcParams['svg.fonttype'] = 'none'
 now = datetime.now()
 date_tag = now.strftime("%Y%m%d")
 
-### DICT RESOURCES ###
-
-rename_dict_expt1 = {'# meanings (human)': 'num_meanings_human',
-					 '# synonyms (human)': 'num_synonyms_human',
-					 '# meanings (Wordnet)': 'num_meanings_wordnet',
-					 '# synonyms (Wordnet)': 'num_synonyms_wordnet',
-					 'Log Subtlex frequency': 'log_subtlex_frequency',
-					 'Log Subtlex CD': 'log_subtlex_cd',
-					 'Arousal': 'arousal',
-					 'Concreteness': 'concreteness',
-					 'Familiarity': 'familiarity',
-					 'Imageability': 'imageability',
-					 'Valence': 'valence',
-					 'GloVe distinctiveness': 'glove_distinctiveness',
-					 }
-
-rename_dict_expt2 = {'# meanings (human)': 'num_meanings_human',
-					 '# synonyms (human)': 'num_synonyms_human',
-					 'Google n-gram frequency': 'google_ngram_freq',
-					 'Arousal': 'arousal',
-					 'Concreteness': 'concreteness',
-					 'Familiarity': 'familiarity',
-					 'Imageability': 'imageability',
-					 'Valence': 'valence', }
-
-rename_dict_expt1_inv = {v: k for k, v in rename_dict_expt1.items()}
-rename_dict_expt2_inv = {v: k for k, v in rename_dict_expt2.items()}
-
-d_predictors = {'expt1': ['# meanings (human)', '# synonyms (human)', '# meanings (Wordnet)', '# synonyms (Wordnet)',
-					  'Log Subtlex frequency', 'Log Subtlex CD',
-					  'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence', 'GloVe distinctiveness', ],
-				'expt2': ['# meanings (human)', '# synonyms (human)', 'Google n-gram frequency',
-					  'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence']}
-
-d_model_names = {'synonyms_human': '# synonyms',
-				 'meanings_human': '# meanings',
-				 'baseline_human': '# synonyms and # meanings',
-				 'synonyms_wordnet': '# synonyms (Wordnet)',
-				 'meanings_wordnet': '# meanings (Wordnet)',
-				 'baseline_corpus': '# synonyms and # meanings (Wordnet)',
-				 'baseline_human_arousal': 'Arousal',
-				 'baseline_human_concreteness': 'Concreteness',
-				'baseline_human_familiarity': 'Familiarity',
-				 'baseline_human_imageability': 'Imageability',
-				'baseline_human_valence': 'Valence',
-				'baseline_human_log_subtlex_frequency': 'Log Subtlex frequency',
-				'baseline_human_log_subtlex_cd': 'Log Subtlex CD',
-				'baseline_human_glove_distinctiveness': 'GloVe distinctiveness',
-				'baseline_human_google_ngram_freq': 'Google n-gram frequency',
-}
-
-d_model_colors = {'synonyms_human': '#c9e876',
-				  'meanings_human': '#63ca62',
-				  'baseline_human': '#46a35a',
-				  'synonyms_wordnet': '#ccd1ef',
-				  'meanings_wordnet': '#8d99e7',
-				  'baseline_corpus': '#5563bf',}
-
-d_acc_metrics_names = {'acc': 'Accuracy',
-					   'hit.rate': 'Hit rate',
-					   'false.alarm.rate': 'False alarm rate',}
-
-
 ### FUNCTIONS ###
+
+def make_save_subfolder(SAVEDIR: str,
+						save_subfolder: str,):
+	"""Make a subfolder in SAVE_DIR if it does not exist.
+	
+	Args:
+		SAVE_DIR (str): root save directory
+		save_subfolder (str): subfolder
+	"""
+	
+	if not os.path.exists(f'{SAVEDIR}{save_subfolder}'):
+		os.makedirs(f'{SAVEDIR}{save_subfolder}')
+		print(f'Created directory: {save_subfolder}')
+
+def acc_vs_predictor(df: pd.DataFrame,
+					 predictor: str,
+					 normalization_setting: str = '',
+					 save: typing.Union[bool, str] = False,
+					 rename_dict_inv: dict = {},
+					 graphic_setting: str = 'big', ):
+	"""
+	Produce scatter plots of accuracy versus predictor.
+
+	Args:
+		df (pd.DataFrame): dataframe with columns 'acc' and predictor
+		predictor (str): predictor to plot on x-axis
+		normalization_setting (str): normalization setting to plot on x-axis
+		save (bool, str): if True, save the plot, if str, save to that folder
+		rename_dict_inv (dict): dictionary to rename the predictor for titles
+		graphic_setting (str): graphic setting, options are: 'normal', 'big'
+
+	Returns:
+
+	"""
+	# Make sure that all observations are visible.
+	if normalization_setting == '':
+		x_limit_offset = [0.3 if predictor not in ['num_meanings_wordnet', 'num_synonyms_wordnet'] else 8]
+		if predictor == 'glove_distinctiveness':
+			x_limit_offset = 0.02
+	elif normalization_setting == '_zscore' or normalization_setting == '_demean':
+		x_limit_offset = [
+			0.5 if predictor not in ['num_meanings_wordnet', 'num_synonyms_wordnet', 'google_ngram_freq'] else 1.3]
+	else:
+		x_limit_offset = 0.1
+	
+	x_min = df[f'{predictor}{normalization_setting}'].min() - x_limit_offset
+	x_max = df[f'{predictor}{normalization_setting}'].max() + x_limit_offset
+	
+	if graphic_setting == 'normal':
+		
+		sns.set(style="ticks", font_scale=1.8, rc={"grid.linewidth": 1,
+												   'grid.alpha': 0,  # no grid
+												   "ytick.major.size": 10,
+												   }, )  # 'figure.figsize':(12,12)
+		xticks = np.linspace(x_min, x_max, 5)
+		yticks = np.linspace(0.6, 1, 5)
+		
+		plt.figure(figsize=(10, 10))
+		plt.xlim(x_min, x_max)
+		plt.ylim(0.6, 1)
+		sns.scatterplot(x=f'{predictor}{normalization_setting}', y=f'acc', data=df, s=110, alpha=0.4,
+						color='black', linewidth=0,
+						)
+		# Add r value and plot best fit line
+		r = df.corr()[f'{predictor}{normalization_setting}']['acc']
+		plt.text(0.92, 0.95, f'r={r:.2f}', horizontalalignment='center', verticalalignment='center',
+				 transform=plt.gca().transAxes)
+		# Plot linear line with think line
+		sns.regplot(x=f'{predictor}{normalization_setting}', y=f'acc', data=df, color='red',
+					scatter=False, x_ci='ci', ci=95, n_boot=1000,  # use sns default CI bootstrap
+					line_kws={'linewidth': 6},
+					truncate=True, )
+		plt.ylabel('Accuracy')
+		plt.xlabel(rename_dict_inv[predictor])  # get key from rename dict
+		# plt.xticks(xticks, labels=[str(x[0]) for x in np.round(xticks)])
+		plt.yticks(yticks)
+	
+	elif graphic_setting == 'big':
+		sns.set(style="ticks", font_scale=2.6, rc={"grid.linewidth": 1,
+												   'grid.alpha': 0,  # no grid
+												   "ytick.major.size": 10,
+												   }, )  # 'figure.figsize':(12,12)
+		
+		xticks = np.linspace(x_min, x_max, 3).ravel()
+		yticks = np.linspace(0.6, 1, 3).ravel()
+		
+		fig, ax = plt.subplots(figsize=(7, 7))
+		ax.set_box_aspect(1)
+		plt.xlim(x_min, x_max)
+		plt.ylim(0.55, 1)
+		sns.scatterplot(x=f'{predictor}{normalization_setting}', y=f'acc', data=df, s=230, alpha=0.3,
+						color='black', linewidth=0,
+						)
+		# Add r value and plot best fit line
+		r = df.corr()[f'{predictor}{normalization_setting}']['acc']
+		plt.text(0.9, 1.04, f'r={r:.2f}', horizontalalignment='center', verticalalignment='center',
+				 transform=plt.gca().transAxes, fontsize=32)
+		# Plot linear line with think line
+		sns.regplot(x=f'{predictor}{normalization_setting}', y=f'acc', data=df, color='red',
+					scatter=False, x_ci='ci', ci=95, n_boot=1000,  # use sns default CI bootstrap
+					line_kws={'linewidth': 8},
+					truncate=True, )
+		plt.ylabel(None)  # ('Accuracy')
+		plt.xlabel(None)  # (rename_dict_inv[predictor])  # get key from rename dict
+		plt.xticks(xticks, labels=[str(x) for x in np.round(xticks)])
+		plt.yticks(yticks)
+	# plt.title(f'Accuracy vs. {rename_dict_inv[predictor]}', fontsize=30)
+	
+	else:
+		raise ValueError('graphic_setting should be either normal or big')
+	
+	# plt.title(f'Accuracy vs. {rename_dict_inv[predictor]}', fontsize=22)
+	plt.tight_layout()
+	if save:
+		save_str = f'{save}/acc_vs_{predictor}{normalization_setting}_{date_tag}'
+		plt.savefig(f'{save_str}.png', dpi=120)
+		plt.savefig(f'{save_str}.svg', dpi=32, )
+	plt.show()
+
+
+def plot_full_heatmap(df: pd.DataFrame,
+					  title: str = 'Correlation heatmap',
+					  nan_predictors: typing.Union[list, None] = None,
+					  exclude_wordnet: bool = True,
+					  plot_date_tag: str = '',
+					  rename_dict: typing.Dict[str, str] = {},
+					  save_str: str = 'corr_heatmap',
+					  save: typing.Union[bool, str] = False, ):
+	"""Correlate the input df with itself, and plot the result as a heatmap
+
+	Args:
+		df (pd.DataFrame): dataframe to be correlated
+		title (str): title of the plot
+		nan_predictors (list, optional): list of predictors (columns) to be added in as nan values in the heatmap
+		exclude_wordnet (bool, optional): whether to exclude wordnet predictors from the heatmap
+		plot_date_tag (str, optional): date tag to be added to the plot title
+		rename_dict (dict, optional): dict of column names to be renamed
+			Keys are current columns names, values are new column names
+		save_str (str): string to be added to the file name
+		save (bool, str): if True, save the plot, if str, save to that folder
+	"""
+	
+	if nan_predictors is not None:
+		for predictor in nan_predictors:
+			df[predictor] = np.nan
+		save_str_nan_models = '_with-nan-models'
+	else:
+		save_str_nan_models = ''
+	
+	if exclude_wordnet: # Exclude wordnet predictors (has wordnet in the column name)
+		df = df.loc[:, ~df.columns.str.contains('wordnet')]
+		reorder_predictors = [x for x in order_predictors if 'Wordnet' not in x]
+		save_str_wordnet = '_without-wordnet'
+	else:
+		save_str_wordnet = ''
+		reorder_predictors = order_predictors
+	
+	# Rename columns to pretty names
+	df.rename(columns=rename_dict, inplace=True)
+	
+	if nan_predictors is not None: # Reorder columns using order_predictors
+		df = df[reorder_predictors]
+		
+	df_corr = df.corr()
+	
+	plt.figure(figsize=(15, 15))
+	sns.set(font_scale=1.6)
+	g = sns.heatmap(df_corr, cmap='RdBu_r', center=0, square=True,
+					cbar_kws={"shrink": 0.75}, vmin=-1, vmax=1,
+					linewidths=0.005, linecolor='black')
+	g.set_facecolor('white')  # which values nans will have
+	plt.title(title)
+	plt.tight_layout(pad=2)
+	plt.xticks(rotation=55)
+	if save:
+		save_str_full = f'{save}/{save_str}{save_str_nan_models}{save_str_wordnet}{plot_date_tag}'
+		plt.savefig(f'{save_str_full}.png', dpi=180)
+		plt.savefig(f'{save_str_full}.svg', dpi=180)
+		df.corr().to_csv(f'{save_str_full}.csv')
+	plt.show()
+
 
 def accuracy_barplot(result_dir_expt1: str,
 					 result_dir_expt2: str,
@@ -242,8 +358,10 @@ def additional_predictor_increase(result_dir: str,
 								  plot_date_tag: str,
 								  model_name: str,
 								  models_of_interest: list,
+								  nan_models: typing.Union[list, None] = None,
 								  value_to_plot: str = 'median_CI50_spearman',
 								  baseline_model: str = 'baseline_human',
+								  cmap: str = 'plasma',
 								  save: typing.Union[bool, str] = False, ):
 	"""
 	Plot percent increase from a baseline model to models of interest (models with additional predictor).
@@ -254,8 +372,10 @@ def additional_predictor_increase(result_dir: str,
 		plot_date_tag (str): Date tag for the plots
 		model_name (str): Name of the csv file where the models where stored (i.e., NAME-{})
 		models_of_interest (list): List of strings of specific models to plot
+		nan_models (list, optional): List of models to add in as empty, nan columns. Defaults to None.
 		value_to_plot (str): Which value to plot for the model performance data. Default: 'median_CI50_spearman'
 		baseline_model (str): Name of the baseline model. Default: 'baseline_human'
+		cmap (str): Colormap to use for the plot. Default: 'plasma'
 		save (bool, str): Whether to save the plot or not. Default: False
 
 	Returns:
@@ -271,36 +391,36 @@ def additional_predictor_increase(result_dir: str,
 						  index_col=0)
 	
 	# Get percent increase from baseline_human model for value_to_plot (default: median_CI50_spearman)
-	
 	cv_expt_increase = (cv_expt.loc[models_of_interest, value_to_plot] - cv_expt.loc[
 		'baseline_human', value_to_plot]) / \
 					   cv_expt.loc[baseline_model, value_to_plot] * 100
+	if nan_models: # Add in empty columns for nan models
+		for model in nan_models:
+			cv_expt_increase[model] = np.nan
+			
+		# Reorder models (rows)
+		cv_expt_increase = cv_expt_increase.reindex(order_additional_predictor_models, axis=1)
+		
+		save_str_nan_models = 'with-nan-models_'
+	else:
+		save_str_nan_models = ''
 	
 	pretty_model_names = [d_model_names[model] for model in cv_expt_increase.index.values]
 	
 	# Plot as heatmap with colorbar
 	fig, ax = plt.subplots(figsize=(8, 6))
 	plt.imshow(cv_expt_increase.values.reshape(1, -1),
-			   cmap='hot', vmin=0, vmax=15,
+			   cmap=cmap, vmin=0, vmax=10,
 			   interpolation=None,
 			   )
 	plt.colorbar()
-	plt.xticks(np.arange(len(models_of_interest)), pretty_model_names, rotation=90, fontsize=12)
+	plt.xticks(np.arange(len(pretty_model_names)), pretty_model_names, rotation=55, fontsize=12)
 	ax.get_yaxis().set_visible(False)
 	plt.tight_layout(w_pad=4)
 	plt.title(f'{experiment_name}', fontsize=16)
 	if save:
-		if save:
-			plt.savefig(save + f'{experiment_name}_{value_to_plot}_increase-from-{baseline_model}_{plot_date_tag}.png', dpi=300)
-			plt.savefig(save + f'{experiment_name}_{value_to_plot}_increase-from-{baseline_model}_{plot_date_tag}.svg', dpi=300)
+		save_str = f'{experiment_name}_{value_to_plot}_increase-from-{baseline_model}_{save_str_nan_models}{plot_date_tag}'
+		plt.savefig(save + f'{save_str}.png', dpi=300)
+		plt.savefig(save + f'{save_str}.svg', dpi=300)
 	plt.show()
 
-### TO DELETE ###
-	#
-	# # Load subject ceiling data
-	# subject_split_expt1 = pd.read_csv(RESULTDIR_expt1 +
-	# 								  subfolder +
-	# 								  f'/subject_split_CI_{plot_date_tag}.csv', index_col=0)
-	# subject_split_expt2 = pd.read_csv(RESULTDIR_expt2 +
-	# 								  subfolder +
-	# 								  f'/subject_split_CI_{plot_date_tag}.csv', index_col=0)
