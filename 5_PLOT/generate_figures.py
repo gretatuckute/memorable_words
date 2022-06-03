@@ -5,36 +5,54 @@ from utils_figures import *
 RESULTDIR_expt1 = '../expt1_results/'
 RESULTDIR_expt2 = '../expt2_results/'
 SAVEDIR = '../expt1_expt2_results/'
-plot_date_tag = '20220519' # which date analyses were run on
+plot_date_tag = '20220602' # which date analyses were run on
 
 if __name__ == '__main__':
 	
 	## Load data that was used to run analyses (full dataframe with rows: words, columns: target and predictors) ##
 	df_expt1 = pd.read_csv(f'{RESULTDIR_expt1}/' # Load same data that was used to generate plots
 						   f'data_with_preprocessed_cols_used_for_analyses/'
-						   f'exp1_data_with_norms_reordered_gt_{plot_date_tag}_preprocessed_cols.csv')
+						   f'exp1_data_with_norms_reordered_gt_20220519_preprocessed_cols.csv')
 	df_expt2 = pd.read_csv(f'{RESULTDIR_expt2}/' # Load same data that was used to generate plots
 							f'data_with_preprocessed_cols_used_for_analyses/'
-						   f'exp2_data_with_norms_reordered_gt_20220327_preprocessed_cols.csv') # tod
+						   f'exp2_data_with_norms_reordered_gt_20220519_preprocessed_cols.csv')
 	
 	##### Correlation heatmap of predictors #####
 	save_subfolder = 'corr_heatmap'
 	make_save_subfolder(SAVEDIR, save_subfolder)
-	
+
 	# Plot heatmap of predictor correlations
 	for exclude_wordnet_bool in [True, False]:
-		plot_full_heatmap(df=df_expt1[rename_dict_expt1_inv],  # Obtain df with predictors only,
+		plot_full_heatmap(df=df_expt1[rename_dict_expt1_inv.keys()],  # Obtain df with predictors only,
 						  title='Expt 1: Pearson correlation of norms',
 						  nan_predictors=[pred for pred in rename_dict_expt2_inv if pred not in rename_dict_expt1_inv], # also run with None
 						  exclude_wordnet=exclude_wordnet_bool,
 						  rename_dict=rename_dict_expt1_expt2_inv,
+						  plot_date_tag=plot_date_tag,
 						  save_str='expt1_corr_predictors_full_heatmap',
 						  save=f'{SAVEDIR}{save_subfolder}/', )
-		plot_full_heatmap(df=df_expt2[rename_dict_expt2_inv],  # Obtain df with predictors only,
+		plot_full_heatmap(df=df_expt2[rename_dict_expt2_inv.keys()],  # Obtain df with predictors only,
 						  title='Expt 2: Pearson correlation of norms',
 						  nan_predictors=[pred for pred in rename_dict_expt1_inv if pred not in rename_dict_expt2_inv], # also run with None
 						  exclude_wordnet=exclude_wordnet_bool,
 						  rename_dict=rename_dict_expt1_expt2_inv,
+						  plot_date_tag=plot_date_tag,
+						  save_str='expt2_corr_predictors_full_heatmap',
+						  save=f'{SAVEDIR}{save_subfolder}/', )
+		plot_full_heatmap(df=df_expt1[rename_dict_expt1_inv.keys()],  # Obtain df with predictors only,
+						  title='Expt 1: Pearson correlation of norms',
+						  nan_predictors=None, # also run with None
+						  exclude_wordnet=exclude_wordnet_bool,
+						  rename_dict=rename_dict_expt1_expt2_inv,
+						  plot_date_tag=plot_date_tag,
+						  save_str='expt1_corr_predictors_full_heatmap',
+						  save=f'{SAVEDIR}{save_subfolder}/', )
+		plot_full_heatmap(df=df_expt2[rename_dict_expt2_inv.keys()],  # Obtain df with predictors only,
+						  title='Expt 2: Pearson correlation of norms',
+						  nan_predictors=None, # also run with None
+						  exclude_wordnet=exclude_wordnet_bool,
+						  rename_dict=rename_dict_expt1_expt2_inv,
+						  plot_date_tag=plot_date_tag,
 						  save_str='expt2_corr_predictors_full_heatmap',
 						  save=f'{SAVEDIR}{save_subfolder}/', )
 

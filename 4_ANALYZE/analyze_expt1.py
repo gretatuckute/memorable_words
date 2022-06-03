@@ -1,15 +1,15 @@
 from utils import *
 
 ## SETTINGS ##
-Q0 = False # subject consistency
-Q1 = False # accuracy metrics
-Q2 = False # all baseline models
-Q3 = False # models for baseline + ONE additional predictor
-Q4 = False # forward regression
+Q0 = True # subject consistency
+Q1 = True # accuracy metrics
+Q2 = True # all baseline models
+Q3 = True # models for baseline + ONE additional predictor
+Q4 = True # forward-backward selection
 
 posthoc_stats = False
 
-save = True
+save = False
 np.random.seed(0)
 
 fname = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_gt_20220519.csv"
@@ -231,7 +231,7 @@ if __name__ == '__main__':
 								 'log_subtlex_frequency', 'log_subtlex_cd', 'glove_distinctiveness']
 		
 		lst_additional_predictors_cv = []
-		lst_additional_predicors_comp_anova = []
+		lst_additional_predictors_comp_anova = []
 		for pred in (additional_predictors):
 			model_name = f'baseline_human_{pred.lower()}'
 			predictors = ['num_meanings_human', 'num_synonyms_human', pred]
@@ -248,7 +248,7 @@ if __name__ == '__main__':
 			comp = sm.stats.anova_lm(m_baseline_human, m_baseline_human_add_pred)
 			comp['model'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean'
 			comp['model_add_predictor'] = f'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + {pred}_demean'
-			lst_additional_predicors_comp_anova.append(comp)
+			lst_additional_predictors_comp_anova.append(comp)
 			
 			if save:
 				# Store the model summaries for each individual model
@@ -261,13 +261,13 @@ if __name__ == '__main__':
 		df_additional_predictors_cv = pd.concat([df_baseline_human, df_additional_predictors_cv])
 		
 		### ANOVA COMPARISON WITH BASELINE ###
-		df_additional_predicors_comp_anova = pd.concat(lst_additional_predicors_comp_anova)
+		df_additional_predictors_comp_anova = pd.concat(lst_additional_predictors_comp_anova)
 		
 		# Create 'comparison_index' column (two rows per comparison, so repeat the index twice)
-		df_additional_predicors_comp_anova['comparison_index'] = (np.repeat(np.arange(len(df_additional_predicors_comp_anova) / 2), 2))
+		df_additional_predictors_comp_anova['comparison_index'] = (np.repeat(np.arange(len(df_additional_predictors_comp_anova) / 2), 2))
 		
 		# Reorganize columns: comparison_index, model, model_add_predictor, F, Pr(>F), ss_diff, df_diff, ssr
-		df_additional_predicors_comp_anova = df_additional_predicors_comp_anova[
+		df_additional_predictors_comp_anova = df_additional_predictors_comp_anova[
 			['comparison_index', 'model', 'model_add_predictor', 'F', 'Pr(>F)', 'ss_diff', 'df_diff', 'ssr']]
 		
 		if save:
@@ -277,13 +277,13 @@ if __name__ == '__main__':
 				f'across-models_df_cv_NAME-additional-predictor_'
 				f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
 			
-			df_additional_predicors_comp_anova.to_csv(f'{RESULTDIR}/{save_subfolder}/'
+			df_additional_predictors_comp_anova.to_csv(f'{RESULTDIR}/{save_subfolder}/'
 													  f'full_summary/'
 													  f'summary_comp_anova_'
 													  f'NAME-additional-predictor_'
 													  f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
 	
-	## Forward regression ##
+	## Forward-backward selection ##
 	if Q4:
 		save_subfolder = '4_stepwise_regression'
 		

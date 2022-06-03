@@ -68,5 +68,6 @@ order_additional_predictor_models = ['baseline_human', 'baseline_human_arousal',
 									 'baseline_human_glove_distinctiveness', 'baseline_human_google_ngram_freq']
 
 order_predictors = ['# meanings (human)', '# synonyms (human)', '# meanings (Wordnet)', '# synonyms (Wordnet)',
-					'Log Subtlex frequency', 'Log Subtlex CD', 'Arousal', 'Concreteness', 'Familiarity', 'Imageability',
-					'Valence', 'GloVe distinctiveness', 'Google n-gram frequency']
+					'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence',
+					'Log Subtlex frequency', 'Log Subtlex CD',
+					'GloVe distinctiveness', 'Google n-gram frequency']

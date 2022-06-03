@@ -36,6 +36,7 @@ def acc_vs_predictor(df: pd.DataFrame,
 					 normalization_setting: str = '',
 					 save: typing.Union[bool, str] = False,
 					 rename_dict_inv: dict = {},
+					 plot_date_tag: str = '',
 					 graphic_setting: str = 'big', ):
 	"""
 	Produce scatter plots of accuracy versus predictor.
@@ -51,6 +52,12 @@ def acc_vs_predictor(df: pd.DataFrame,
 	Returns:
 
 	"""
+	# Get experiment name
+	if len(df) == 2109:
+		expt = 'expt1'
+	else:
+		expt = 'expt2'
+	
 	# Make sure that all observations are visible.
 	if normalization_setting == '':
 		x_limit_offset = [0.3 if predictor not in ['num_meanings_wordnet', 'num_synonyms_wordnet'] else 8]
@@ -131,7 +138,8 @@ def acc_vs_predictor(df: pd.DataFrame,
 	# plt.title(f'Accuracy vs. {rename_dict_inv[predictor]}', fontsize=22)
 	plt.tight_layout()
 	if save:
-		save_str = f'{save}/acc_vs_{predictor}{normalization_setting}_{date_tag}'
+		normalization_setting_str = ['' if normalization_setting == '' else f'_{normalization_setting}'][0]
+		save_str = f'{save}/{expt}_acc_vs_{predictor}{normalization_setting_str}{plot_date_tag}'
 		plt.savefig(f'{save_str}.png', dpi=120)
 		plt.savefig(f'{save_str}.svg', dpi=32, )
 	plt.show()
@@ -158,11 +166,12 @@ def plot_full_heatmap(df: pd.DataFrame,
 		save_str (str): string to be added to the file name
 		save (bool, str): if True, save the plot, if str, save to that folder
 	"""
-	
 	if nan_predictors is not None:
+		df_copy = df.copy()
 		for predictor in nan_predictors:
-			df[predictor] = np.nan
-		save_str_nan_models = '_with-nan-models'
+			df_copy.loc[:, predictor] = np.nan
+			save_str_nan_models = '_with-nan-preds'
+		df = df_copy
 	else:
 		save_str_nan_models = ''
 	
@@ -175,7 +184,7 @@ def plot_full_heatmap(df: pd.DataFrame,
 		reorder_predictors = order_predictors
 	
 	# Rename columns to pretty names
-	df.rename(columns=rename_dict, inplace=True)
+	df = df.rename(columns=rename_dict, inplace=False)
 	
 	if nan_predictors is not None: # Reorder columns using order_predictors
 		df = df[reorder_predictors]
@@ -192,7 +201,7 @@ def plot_full_heatmap(df: pd.DataFrame,
 	plt.tight_layout(pad=2)
 	plt.xticks(rotation=55)
 	if save:
-		save_str_full = f'{save}/{save_str}{save_str_nan_models}{save_str_wordnet}{plot_date_tag}'
+		save_str_full = f'{save}/{save_str}{save_str_nan_models}{save_str_wordnet}_{plot_date_tag}'
 		plt.savefig(f'{save_str_full}.png', dpi=180)
 		plt.savefig(f'{save_str_full}.svg', dpi=180)
 		df.corr().to_csv(f'{save_str_full}.csv')
