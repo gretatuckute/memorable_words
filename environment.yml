@@ -1,0 +1,42 @@
+name: wordmem
+channels:
+  - defaults
+dependencies:
+  - ca-certificates=2022.4.26=hecd8cb5_0
+  - certifi=2021.10.8=py38hecd8cb5_2
+  - libcxx=12.0.0=h2f01273_0
+  - libffi=3.3=hb1e8313_2
+  - ncurses=6.3=hca72f7f_2
+  - openssl=1.1.1o=hca72f7f_0
+  - pip=21.2.4=py38hecd8cb5_0
+  - python=3.8.13=hdfd78df_0
+  - readline=8.1.2=hca72f7f_1
+  - setuptools=61.2.0=py38hecd8cb5_0
+  - sqlite=3.38.3=h707629a_0
+  - tk=8.6.11=h3fd3227_1
+  - wheel=0.37.1=pyhd3eb1b0_0
+  - xz=5.2.5=hca72f7f_1
+  - zlib=1.2.12=h4dc903c_2
+  - pip:
+    - cycler==0.11.0
+    - fonttools==4.33.3
+    - joblib==1.1.0
+    - kiwisolver==1.4.2
+    - matplotlib==3.5.2
+    - numpy==1.22.3
+    - packaging==21.3
+    - pandas==1.4.2
+    - patsy==0.5.2
+    - pillow==9.1.0
+    - pyparsing==3.0.8
+    - python-dateutil==2.8.2
+    - pytz==2022.1
+    - scikit-learn==1.0.2
+    - scipy==1.8.0
+    - seaborn==0.11.2
+    - six==1.16.0
+    - sklearn==0.0
+    - statsmodels==0.13.2
+    - threadpoolctl==3.1.0
+    - tqdm==4.64.0
+prefix: /opt/anaconda3/envs/wordmem
