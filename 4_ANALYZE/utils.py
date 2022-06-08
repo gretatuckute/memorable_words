@@ -27,8 +27,6 @@ RESULT_subdirs = ['data_with_preprocessed_cols_used_for_analyses',
 				  '2_monogamous_meanings',
 				  '3_additional_predictors',
 				  '4_stepwise_regression',
-				  'corr_heatmaps',
-				  'corr_predictors',
 				  'posthoc_bootstrap']
 
 RESULT_subfolders = ['cv_all_preds', # cross-validated model performance, across all cross-validation splits
@@ -301,6 +299,9 @@ def get_cv_score(df: pd.DataFrame,
 	num_words = acc1.shape[1]
 	num_words_train = int(
 		np.ceil(num_words / 2))  # for expt 1: 2190/2=1054.5, so round up to 1055 for training set, and 1054 for test
+	print(f'Number of splits: {num_subject_splits} with {num_words_train} words in the training set out of {num_words} words')
+
+	np.random.seed(0)
 	
 	for i in tqdm(range(num_subject_splits)):  # i is which row, i.e. which subject split to use
 		
@@ -317,7 +318,6 @@ def get_cv_score(df: pd.DataFrame,
 		subject_split_half_spearman_r.append(r_spearman_subject_split)
 		
 		# Randomly pick item (word) train/test indices
-		np.random.seed(0)
 		train_words_idxs = np.random.choice(num_words, size=num_words_train, replace=False, )
 		test_words_idxs = np.setdiff1d(np.arange(num_words), train_words_idxs)
 		
@@ -735,6 +735,9 @@ def get_cv_score_w_stepwise_regression(df: pd.DataFrame,
 	num_words = acc1.shape[1]
 	num_words_train = int(
 		np.ceil(num_words / 2))  # for expt 1: 2190/2=1054.5, so round up to 1055 for training set, and 1054 for test
+	print(f'Number of splits: {num_subject_splits} with {num_words_train} words in the training set out of {num_words} words')
+	
+	np.random.seed(0)
 	
 	for i in tqdm(range(num_subject_splits)):  # i is which row, i.e. which subject split to use
 		
@@ -744,7 +747,6 @@ def get_cv_score_w_stepwise_regression(df: pd.DataFrame,
 		s2 = acc2.iloc[i]
 		
 		# Randomly pick train/test indices
-		np.random.seed(0)
 		train_words_idxs = np.random.choice(num_words, size=num_words_train, replace=False)
 		test_words_idxs = np.setdiff1d(np.arange(num_words), train_words_idxs)
 		

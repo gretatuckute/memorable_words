@@ -189,7 +189,7 @@ if __name__ == '__main__':
 		if len(file_baseline) >= 1:
 			assert(np.allclose(df_baseline_human.select_dtypes(numerics).values, df_baseline_human_precomputed.select_dtypes(numerics).values))
 		
-		additional_predictors = ['arousal', 'concreteness', 'familiarity', 'imageability', 'valence',
+		additional_predictors = ['concreteness',  'imageability', 'familiarity','valence','arousal',
 								 'google_ngram_freq']
 		
 		lst_additional_predictors_cv = []

@@ -9,7 +9,7 @@ Q4 = True # forward-backward selection
 
 posthoc_stats = False
 
-save = False
+save = True
 np.random.seed(0)
 
 fname = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_gt_20220519.csv"
@@ -216,7 +216,7 @@ if __name__ == '__main__':
 						  f'demeanx-True_demeany-True_permute-False' in f]
 		if len(file_baseline) >= 1:
 			df_baseline_human_precomputed = pd.read_csv(f'{RESULTDIR}/2_monogamous_meanings/cv_summary_preds/'
-													f'{file_baseline[-1]}', index_col=0)
+													f'{file_baseline[0]}', index_col=0)
 		
 		df_baseline_human = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
 										 model_name='baseline_human',
@@ -227,7 +227,7 @@ if __name__ == '__main__':
 		if len(file_baseline) >= 1:
 			assert(np.allclose(df_baseline_human.select_dtypes(numerics).values, df_baseline_human_precomputed.select_dtypes(numerics).values))
 		
-		additional_predictors = ['arousal', 'concreteness', 'familiarity', 'imageability', 'valence',
+		additional_predictors = ['concreteness',  'imageability', 'familiarity','valence','arousal',
 								 'log_subtlex_frequency', 'log_subtlex_cd', 'glove_distinctiveness']
 		
 		lst_additional_predictors_cv = []
@@ -286,7 +286,7 @@ if __name__ == '__main__':
 	## Forward-backward selection ##
 	if Q4:
 		save_subfolder = '4_stepwise_regression'
-		
+
 		# Run within train and test splits (CV)
 		df_stepwise, included_features_across_splits = \
 			get_cv_score_w_stepwise_regression(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,

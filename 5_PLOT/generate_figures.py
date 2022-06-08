@@ -1,11 +1,10 @@
 """Generate figures using analyses in 4_ANALYZE"""
-
 from utils_figures import *
 
 RESULTDIR_expt1 = '../expt1_results/'
 RESULTDIR_expt2 = '../expt2_results/'
 SAVEDIR = '../expt1_expt2_results/'
-plot_date_tag = '20220602' # which date analyses were run on
+plot_date_tag = '20220606' # which date analyses were run on
 
 if __name__ == '__main__':
 	
@@ -16,6 +15,10 @@ if __name__ == '__main__':
 	df_expt2 = pd.read_csv(f'{RESULTDIR_expt2}/' # Load same data that was used to generate plots
 							f'data_with_preprocessed_cols_used_for_analyses/'
 						   f'exp2_data_with_norms_reordered_gt_20220519_preprocessed_cols.csv')
+	
+	df_expt2.groupby('semantic_category').median().sort_values('acc', ascending=False).drop(columns=['Unnamed: 0'])
+	
+
 	
 	##### Correlation heatmap of predictors #####
 	save_subfolder = 'corr_heatmap'
@@ -59,7 +62,7 @@ if __name__ == '__main__':
 	##### Correlation of predictors with target #####
 	save_subfolder = 'corr_predictors'
 	make_save_subfolder(SAVEDIR, save_subfolder)
-	
+
 	# For each predictor, plot the correlation with the target (accuracy) across all data points
 	for normalization_setting in ['', '_demean', '_zscore']:
 		for predictor in rename_dict_expt1_inv.keys():
@@ -68,15 +71,15 @@ if __name__ == '__main__':
 							 normalization_setting=normalization_setting,
 							 rename_dict_inv=rename_dict_expt1_expt2_inv,
 							 save=f'{SAVEDIR}{save_subfolder}/')
-			
+
 			for predictor in rename_dict_expt2_inv.keys():
 				acc_vs_predictor(df=df_expt2,
 								 predictor=predictor,
 								 normalization_setting=normalization_setting,
 								 rename_dict_inv=rename_dict_expt1_expt2_inv,
 								 save=f'{SAVEDIR}{save_subfolder}/')
-	
-	
+
+
 	##### Q1: How memorable are words? #####
 	# Plot accuracies as barplots for expt1 and expt2 with 95% CI
 	save_subfolder = '1_acc_metrics'
@@ -144,7 +147,7 @@ if __name__ == '__main__':
 									upper_CI_value='upper_CI97.5_spearman',
 									save=f'{SAVEDIR}{save_subfolder}/'
 									)
-	
+
 	##### Q3: How do additional predictors change the accuracy? #####
 	save_subfolder = '3_additional_predictors'
 	make_save_subfolder(SAVEDIR, save_subfolder)

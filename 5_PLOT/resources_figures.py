@@ -27,11 +27,14 @@ rename_dict_expt1_inv = {v: k for k, v in rename_dict_expt1.items()}
 rename_dict_expt2_inv = {v: k for k, v in rename_dict_expt2.items()}
 rename_dict_expt1_expt2_inv = {**rename_dict_expt1_inv, **rename_dict_expt2_inv}
 
-d_predictors = {'expt1': ['# meanings (human)', '# synonyms (human)', '# meanings (Wordnet)', '# synonyms (Wordnet)',
-					  'Log Subtlex frequency', 'Log Subtlex CD',
-					  'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence', 'GloVe distinctiveness', ],
-				'expt2': ['# meanings (human)', '# synonyms (human)', 'Google n-gram frequency',
-					  'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence']}
+d_predictors = {'expt1': ['# synonyms (human)', '# meanings (human)',
+						   '# synonyms (Wordnet)', '# meanings (Wordnet)',
+					  '		Concreteness', 'Imageability', 'Familiarity', 'Valence', 'Arousal',
+							'Log Subtlex frequency', 'Log Subtlex CD',
+						   'GloVe distinctiveness', ],
+				'expt2': ['# synonyms (human)', '# meanings (human)',
+					  '		Concreteness', 'Imageability', 'Familiarity', 'Valence', 'Arousal',
+						   'Google n-gram frequency',]}
 
 d_model_names = {'synonyms_human': '# synonyms',
 				 'meanings_human': '# meanings',
@@ -62,12 +65,14 @@ d_acc_metrics_names = {'acc': 'Accuracy',
 					   'false.alarm.rate': 'False alarm rate',}
 
 ### LIST RESOURCES ###
-order_additional_predictor_models = ['baseline_human', 'baseline_human_arousal', 'baseline_human_concreteness',
-									 'baseline_human_familiarity', 'baseline_human_imageability', 'baseline_human_valence',
+order_additional_predictor_models = ['baseline_human',
+									 'baseline_human_concreteness', 'baseline_human_imageability',
+									 'baseline_human_familiarity',  'baseline_human_valence', 'baseline_human_arousal',
 									 'baseline_human_log_subtlex_frequency', 'baseline_human_log_subtlex_cd',
 									 'baseline_human_glove_distinctiveness', 'baseline_human_google_ngram_freq']
 
-order_predictors = ['# meanings (human)', '# synonyms (human)', '# meanings (Wordnet)', '# synonyms (Wordnet)',
-					'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence',
+order_predictors = ['# synonyms (human)', '# meanings (human)',
+					'# synonyms (Wordnet)', '# meanings (Wordnet)',
+					'Concreteness', 'Imageability', 'Familiarity', 'Valence', 'Arousal',
 					'Log Subtlex frequency', 'Log Subtlex CD',
 					'GloVe distinctiveness', 'Google n-gram frequency']

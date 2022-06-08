@@ -12,6 +12,7 @@ import typing
 
 from resources_figures import *
 
+sns.set_style('white')
 plt.rcParams['svg.fonttype'] = 'none'
 now = datetime.now()
 date_tag = now.strftime("%Y%m%d")
@@ -138,7 +139,7 @@ def acc_vs_predictor(df: pd.DataFrame,
 	# plt.title(f'Accuracy vs. {rename_dict_inv[predictor]}', fontsize=22)
 	plt.tight_layout()
 	if save:
-		normalization_setting_str = ['' if normalization_setting == '' else f'_{normalization_setting}'][0]
+		normalization_setting_str = ['' if normalization_setting == '' else f'{normalization_setting}'][0]
 		save_str = f'{save}/{expt}_acc_vs_{predictor}{normalization_setting_str}{plot_date_tag}'
 		plt.savefig(f'{save_str}.png', dpi=120)
 		plt.savefig(f'{save_str}.svg', dpi=32, )
@@ -187,6 +188,9 @@ def plot_full_heatmap(df: pd.DataFrame,
 	df = df.rename(columns=rename_dict, inplace=False)
 	
 	if nan_predictors is not None: # Reorder columns using order_predictors
+		df = df[reorder_predictors]
+	else: # exclude the predictors that exist in reorder_predictors that are not in the df columns
+		reorder_predictors = [x for x in reorder_predictors if x in df.columns]
 		df = df[reorder_predictors]
 		
 	df_corr = df.corr()
@@ -431,5 +435,24 @@ def additional_predictor_increase(result_dir: str,
 		save_str = f'{experiment_name}_{value_to_plot}_increase-from-{baseline_model}_{save_str_nan_models}{plot_date_tag}'
 		plt.savefig(save + f'{save_str}.png', dpi=300)
 		plt.savefig(save + f'{save_str}.svg', dpi=300)
+		pd.DataFrame(cv_expt_increase.values,
+					 index=cv_expt_increase.index.values,
+					 columns=['percent_increase']).to_csv(save + f'{save_str}.csv')
 	plt.show()
+	
+def sort_and_find_word_of_interest(df: pd.DataFrame,
+								   word_of_interest: str):
+	"""Sort dataframe (rows: items, columns: norms and accuracy (acc) metrics.
 
+	Args:
+		df (pd.DataFrame): Dataframe with rows: items, columns: norms and accuracy (acc) metrics.
+		word_of_interest (str): Word of interest to find in the dataframe.
+
+	Returns:
+		pd.DataFrame: Row in df that corresponds to word_of_interest.
+	"""
+	
+	df_sorted = df.sort_values('acc', ascending=False).drop(columns=['Unnamed: 0']).reset_index(drop=False)
+	
+	# find word
+	return df_sorted.loc[df_sorted['word_lower'] == 'avalance']
