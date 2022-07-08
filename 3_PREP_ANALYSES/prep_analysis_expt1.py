@@ -24,31 +24,28 @@ if __name__ == '__main__':
 	d = pd.read_csv(fname)
 	
 	# Rename columns
-	d = d.copy().drop(columns=['FREQcount', 'CDcount', 'Cdlow', 'X', 'freq', 'M','FREQlow', 'word.y', 'mean.cor'])
+	d = d.copy(deep=True).drop(columns=['Unnamed: 0', 'Word.1', 'word', 'word_upper'])
 	
-	d.rename(columns={'num_synonyms': '# synonyms (human)', 'meanings': '# meanings (human)',
-									 'wn_num_synonyms': '# synonyms (Wordnet)', 'wn_num_meanings': '# meanings (Wordnet)',
-					  				 'Lg10CD': 'Log Subtlex CD', 'Lg10WF': 'Log Subtlex frequency',
-									 'valence': 'Valence', 'image': 'Imageability', 'fam': 'Familiarity',
-									 'concrete': 'Concreteness', 'arousal': 'Arousal',
-					  				 'SUBTLWF': 'Subtlex frequency', 'SUBTLCD': 'Subtlex CD',
-									 'syn_n': '# subjects (human) synonyms', 'meanings_n': '# subjects (human) meanings',
-					  				'w.given.r': '1/# synonyms (human)', 'r.given.w': '1/# meanings (human)',
-					  				'num_syn': '# synonyms (human) + 1',
-					                'word.x': 'word_lower', 'Word': 'word_upper',	'Acc':'acc',}, inplace=True)
+	d.rename(columns={'num_synonyms': '# synonyms (human)', 'num_meanings': '# meanings (human)',
+					 'num_synonyms_wordnet': '# synonyms (Wordnet)', 'num_meanings_wordnet': '# meanings (Wordnet)',
+					 'Lg10CD': 'Log Subtlex CD', 'Lg10WF': 'Log Subtlex frequency', 'google_ngram_frequency': 'Google n-gram frequency',
+					 'valence': 'Valence', 'image': 'Imageability', 'fam': 'Familiarity',
+					 'concrete': 'Concreteness', 'arousal': 'Arousal',
+					 'correct rejections': 'correct_rejections', 'false alarms': 'false_alarms',
+					 'Word': 'word_upper'}, inplace=True)
+	# Create word_lower
+	d['word_lower'] = d['word_upper'].str.lower()
+	
 	cols = d.columns.tolist()
-	cols_new_order = ['word_upper', 'word_lower', 'pos', 'acc', 'hits', 'misses', 'correct.rejections', 'false.alarms',
+	cols_new_order = ['word_upper', 'word_lower', 'pos', 'acc', 'hits', 'misses',
+					  'correct_rejections', 'false_alarms', 'false_alarm_rate', 'hit_rate',
 					  '# meanings (human)', '# synonyms (human)', '# meanings (Wordnet)', '# synonyms (Wordnet)',
-					  'Subtlex frequency', 'Log Subtlex frequency', 'Subtlex CD', 'Log Subtlex CD',
-					  'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence', 'GloVe distinctiveness',
-					  '# subjects (human) meanings', '1/# meanings (human)',
-					  '# subjects (human) synonyms', '# synonyms (human) + 1', '1/# synonyms (human)',
-					  'false.alarm.rate', 'hit.rate']
+					  'Log Subtlex frequency', 'Log Subtlex CD', 'Google n-gram frequency',
+					  'Concreteness', 'Imageability', 'Familiarity', 'Valence', 'Arousal',
+					  'GloVe distinctiveness',
+					  'num_ratings_meanings', 'num_ratings_synonyms',]
 
 	d = d[cols_new_order]
-	
-	if save:
-		d.to_csv(f"exp1_data_with_norms_reordered_gt_{date_tag}.csv")
 	
 	## Prepare accuracies for splits (remove words that were excluded) ##
 		
@@ -59,6 +56,7 @@ if __name__ == '__main__':
 	# order of the words for acc1 and acc2
 	accs_word_order = pd.read_csv(fname_word_order, header=None) #2109
 	accs_word_order_str = [x[0] for x in accs_word_order.values]
+	assert (np.setxor1d(accs_word_order_str, d['word_lower'].unique()).size == 113)
 	
 	# Delete words that did not have enough norms (113)
 	excluded_words = np.setdiff1d(accs_word_order, d.word_lower)
@@ -79,8 +77,6 @@ if __name__ == '__main__':
 	acc2_with_excluded_words = acc2.loc[:, cols_to_exclude]
 	acc2_with_excluded_words.columns = accs_word_order_str_new
 	
-	# Assert that word order txt file matches with the accs csv files
-	
 	# Read in word order text file anew to ensure that no variables were manipulated incorrectly
 	word_order = pd.read_csv(fname_word_order, header=None)
 	word_order_lower = word_order[0].str.lower()
@@ -98,5 +94,6 @@ if __name__ == '__main__':
 	assert (np.unique(accs2.columns) == np.unique(d['word_lower'])).all()
 	
 	if save:
+		d.to_csv(f"exp1_data_with_norms_reordered_{date_tag}.csv")
 		accs1.to_csv(f'../expt1_subject_splits/exp1_accs1_{date_tag}.csv') # with removed and reordered words
 		accs2.to_csv(f'../expt1_subject_splits/exp1_accs2_{date_tag}.csv') # with removed and reordered words
