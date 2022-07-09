@@ -2,8 +2,8 @@ from utils import *
 
 save = True
 
-fname_expt1 = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_gt_20220519.csv"
-fname_expt2 = "../3_PREP_ANALYSES/exp2_data_with_norms_reordered_gt_20220519.csv"
+fname_expt1 = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_20220708.csv"
+fname_expt2 = "../3_PREP_ANALYSES/exp2_data_with_norms_reordered_20220708.csv"
 
 ## Load data ##
 d = pd.read_csv(fname_expt1).drop(columns=['Unnamed: 0'])
@@ -16,7 +16,7 @@ if not os.path.exists(f'../expt1_expt2_results/{save_subfolder}'):
 	print(f'Created directory: {save_subfolder}')
 	
 	
-for metric in ['acc', 'hit.rate', 'false.alarm.rate']:
+for metric in ['acc', 'hit_rate', 'false_alarm_rate']:
 	
 	fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 	ax.hist(d[metric], bins=20, label='Experiment 1', alpha=0.5)
@@ -46,11 +46,17 @@ expt1_expt2_overlap = np.intersect1d(d.word_lower.unique(), d2.word_lower.unique
 # How correlated are their accuracies. Only use expt1_expt2_overlap words
 d_overlap = d[d.word_lower.isin(expt1_expt2_overlap)]
 d2_overlap = d2[d2.word_lower.isin(expt1_expt2_overlap)]
+
+# Make sure these are in the same order
+d_overlap = d_overlap.sort_values(by='word_lower')
+d2_overlap = d2_overlap.sort_values(by='word_lower')
+
 assert (d_overlap.word_lower.values == d2_overlap.word_lower.values).all()
 
 cols_to_compute_corr_for = ['acc',
-							'hit.rate', 'false.alarm.rate',
+							'hit_rate', 'false_alarm_rate',
 							'# meanings (human)', '# synonyms (human)',
+							'Google n-gram frequency',
 							'Arousal', 'Concreteness', 'Familiarity', 'Imageability', 'Valence']
 
 lst_r = []

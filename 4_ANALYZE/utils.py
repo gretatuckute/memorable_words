@@ -47,6 +47,7 @@ rename_dict_expt1 = {'# meanings (human)': 'num_meanings_human',
 					 '# synonyms (Wordnet)': 'num_synonyms_wordnet',
 					 'Log Subtlex frequency': 'log_subtlex_frequency',
 					 'Log Subtlex CD': 'log_subtlex_cd',
+					 'Google n-gram frequency': 'google_ngram_frequency',
 					 'Arousal': 'arousal',
 					 'Concreteness': 'concreteness',
 					 'Familiarity': 'familiarity',
@@ -57,7 +58,7 @@ rename_dict_expt1 = {'# meanings (human)': 'num_meanings_human',
 
 rename_dict_expt2 = {'# meanings (human)': 'num_meanings_human',
 					 '# synonyms (human)': 'num_synonyms_human',
-					 'Google n-gram frequency': 'google_ngram_freq',
+					 'Google n-gram frequency': 'google_ngram_frequency',
 					 'Arousal': 'arousal',
 					 'Concreteness': 'concreteness',
 					 'Familiarity': 'familiarity',
@@ -532,16 +533,16 @@ def compute_acc_metrics_with_error(df: pd.DataFrame,
 		
 		# Get 5%, 50%, 95% CI for accuracy, hit.rate, false.alarm.rate
 		acc_ci = np.percentile(df['acc'], [CI_bound_lower, 50, CI_bound_upper])
-		hit_rate_ci = np.percentile(df['hit.rate'], [CI_bound_lower, 50, CI_bound_upper])
-		fa_rate_ci = np.percentile(df['false.alarm.rate'], [CI_bound_lower, 50, CI_bound_upper])
+		hit_rate_ci = np.percentile(df['hit_rate'], [CI_bound_lower, 50, CI_bound_upper])
+		fa_rate_ci = np.percentile(df['false_alarm_rate'], [CI_bound_lower, 50, CI_bound_upper])
 	else:
 		raise ValueError('Error type not recognized')
 	
 	if save:
 		# Save accuracy, hit.rate, false.alarm.rate and their CI
 		df_acc_ci = pd.DataFrame({'acc': acc_ci,
-								  'hit.rate': hit_rate_ci,
-								  'false.alarm.rate': fa_rate_ci})
+								  'hit_rate': hit_rate_ci,
+								  'false_alarm.rate': fa_rate_ci})
 		df_acc_ci.index = [f'lower_CI{CI_bound_lower}', f'median_CI50', f'upper_CI{CI_bound_upper}']
 		
 		df_acc_ci.to_csv(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
@@ -879,13 +880,13 @@ def get_cv_score_w_stepwise_regression(df: pd.DataFrame,
 
 
 def most_frequent_models(included_features_across_splits: list,
-						 num_models_to_report: int = 5,):
+						 num_models_to_report: typing.Union[int, None] = None):
 	"""
 	Find the most frequently occurring models across all splits
 
 	Args:
 		included_features_across_splits (list): list of lists of included features
-		num_models_to_report (int): number of models to report
+		num_models_to_report (int): number of models to report. If None, report all
 
 	Returns:
 		df_most_frequent_models (pd.DataFrame): dataframe with the most frequent models and how many times they occur
@@ -894,15 +895,55 @@ def most_frequent_models(included_features_across_splits: list,
 	u, c = np.unique(included_features_across_splits, return_counts=True)
 	
 	# Get the most frequent model (based on the number of times it was included), second most frequent, etc.
+	if num_models_to_report is None:
+		num_models_to_report = len(u)
+		
 	most_frequent_models = u[np.argsort(c)[::-1][:num_models_to_report]]
 	most_frequent_models_counts = c[np.argsort(c)[::-1][:num_models_to_report]]
 	
 	# package into df
-	df_most_frequent_models = pd.DataFrame(
+	df_stepwise_most_freq = pd.DataFrame(
 		{'model': most_frequent_models,
 		 'count': most_frequent_models_counts})
+		
+	return df_stepwise_most_freq
+
+def feature_inclusion(df_stepwise_most_freq: pd.DataFrame,
+											 predictors_to_check: list):
+	"""Given a dataframe with all the models that occur across CV splits (feature selection), count how many times each
+	predictor was included and included as the first feature.
 	
-	return df_most_frequent_models
+	Args:
+		df_stepwise_most_freq (pd.DataFrame): dataframe with the most frequent models and how many times they occur
+			Rows as unique models, column with count of how many times the model occurred
+		predictors_to_check (list): list of predictors to check
+		
+	Returns:
+		df_inclusion (pd.DataFrame): dataframe with the predictors and how many times they were included and included as the first feature
+	"""
+	df_stepwise_most_freq_copy = df_stepwise_most_freq.copy(deep=True)
+	
+	# Check how many times each predictor in predictors_to_check was included and included as the first feature
+	for predictor in predictors_to_check:
+		df_stepwise_most_freq[f'{predictor}_included'] = df_stepwise_most_freq['model'].apply(
+			lambda x: predictor in x)
+		df_stepwise_most_freq[f'{predictor}_included_first'] = df_stepwise_most_freq['model'].apply(
+			lambda x: predictor in x and x[0] == predictor)
+	
+	# Now sum how many times each predictor was included and included as the first feature (in the count column)
+	df_inclusion = pd.DataFrame(
+		{'predictor': predictors_to_check,
+		 'count_included': np.nan,
+		 'count_included_first': np.nan})
+	
+	for predictor in predictors_to_check:
+		for col in ['included', 'included_first']:
+			# Sum the count column if col = True
+			df_col_true = df_stepwise_most_freq[df_stepwise_most_freq[f'{predictor}_{col}'] == True]
+			df_inclusion.loc[df_inclusion['predictor'] == predictor, f'count_{col}'] = df_col_true['count'].sum()
+	
+	return df_inclusion
+
 
 
 def bootstrap_wrapper(result_dir: str,

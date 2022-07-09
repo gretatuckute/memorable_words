@@ -12,9 +12,9 @@ posthoc_stats = False
 save = True
 np.random.seed(0)
 
-fname = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_gt_20220519.csv"
-fname_accs1 = "../expt1_subject_splits/exp1_accs1_20220519.csv"
-fname_accs2 = "../expt1_subject_splits/exp1_accs2_20220519.csv"
+fname = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_20220708.csv"
+fname_accs1 = "../expt1_subject_splits/exp1_accs1_20220708.csv"
+fname_accs2 = "../expt1_subject_splits/exp1_accs2_20220708.csv"
 
 if __name__ == '__main__':
 	
@@ -228,7 +228,7 @@ if __name__ == '__main__':
 			assert(np.allclose(df_baseline_human.select_dtypes(numerics).values, df_baseline_human_precomputed.select_dtypes(numerics).values))
 		
 		additional_predictors = ['concreteness',  'imageability', 'familiarity','valence','arousal',
-								 'log_subtlex_frequency', 'log_subtlex_cd', 'glove_distinctiveness']
+								 'log_subtlex_frequency', 'log_subtlex_cd', 'glove_distinctiveness', 'google_ngram_frequency', ]
 		
 		lst_additional_predictors_cv = []
 		lst_additional_predictors_comp_anova = []
@@ -296,13 +296,23 @@ if __name__ == '__main__':
 		
 		# Analyze the most frequently occurring models
 		df_stepwise_most_freq = most_frequent_models(included_features_across_splits=included_features_across_splits,
-													 num_models_to_report=10)
+													 num_models_to_report=None) # report all models
+		
+		# Analyze how many times a feature was included or included as first
+		df_stepwise_feature_inclusion = feature_inclusion(df_stepwise_most_freq=df_stepwise_most_freq,
+														  predictors_to_check=all_predictors_renamed)
 		
 		if save:
 			df_stepwise_most_freq.to_csv(
 				f'{RESULTDIR}/{save_subfolder}/'
 				f'cv_summary_preds/'
 				f'across-models_df_cv_NAME-most-freq-stepwise-models_'
+				f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
+			
+			df_stepwise_feature_inclusion.to_csv(
+				f'{RESULTDIR}/{save_subfolder}/'
+				f'cv_summary_preds/'
+				f'across-models_df_cv_NAME-feature-inclusion-stepwise-models_'
 				f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
 		
 		# Full model: stepwise regression on the full dataset, use demeaned variables:
