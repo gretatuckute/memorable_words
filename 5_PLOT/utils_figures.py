@@ -9,10 +9,12 @@ from tqdm import tqdm
 import os
 from os.path import join
 import typing
+from tabulate import tabulate
 
 from resources_figures import *
 
 sns.set_style('white')
+plt.style.use('seaborn-white')
 plt.rcParams['svg.fonttype'] = 'none'
 now = datetime.now()
 date_tag = now.strftime("%Y%m%d")
@@ -64,11 +66,16 @@ def acc_vs_predictor(df: pd.DataFrame,
 		x_limit_offset = [0.3 if predictor not in ['num_meanings_wordnet', 'num_synonyms_wordnet'] else 8]
 		if predictor == 'glove_distinctiveness':
 			x_limit_offset = 0.02
+
 	elif normalization_setting == '_zscore' or normalization_setting == '_demean':
 		x_limit_offset = [
-			0.5 if predictor not in ['num_meanings_wordnet', 'num_synonyms_wordnet', 'google_ngram_freq'] else 1.3]
+			0.5 if predictor not in ['num_meanings_wordnet', 'num_synonyms_wordnet'] else 1.3]
+		
 	else:
 		x_limit_offset = 0.1
+	
+	if predictor == 'google_ngram_frequency':
+		x_limit_offset = 1.3
 	
 	x_min = df[f'{predictor}{normalization_setting}'].min() - x_limit_offset
 	x_max = df[f'{predictor}{normalization_setting}'].max() + x_limit_offset
@@ -167,7 +174,7 @@ def plot_full_heatmap(df: pd.DataFrame,
 		save_str (str): string to be added to the file name
 		save (bool, str): if True, save the plot, if str, save to that folder
 	"""
-	if nan_predictors is not None:
+	if nan_predictors is not None and len(nan_predictors) > 0:
 		df_copy = df.copy()
 		for predictor in nan_predictors:
 			df_copy.loc[:, predictor] = np.nan
@@ -187,7 +194,7 @@ def plot_full_heatmap(df: pd.DataFrame,
 	# Rename columns to pretty names
 	df = df.rename(columns=rename_dict, inplace=False)
 	
-	if nan_predictors is not None: # Reorder columns using order_predictors
+	if nan_predictors is not None and len(nan_predictors) > 0: # Reorder columns using order_predictors
 		df = df[reorder_predictors]
 	else: # exclude the predictors that exist in reorder_predictors that are not in the df columns
 		reorder_predictors = [x for x in reorder_predictors if x in df.columns]
@@ -260,8 +267,8 @@ def accuracy_barplot(result_dir_expt1: str,
 	ax.set_box_aspect(1.8)
 	plt.bar([0, 1], accs_expts.loc[value_to_plot], color='grey', width=0.6, yerr=yerr)
 	plt.ylim([0, 1])
-	plt.xticks([0, 1], ['Expt 1', 'Expt 2'], fontsize=15)
-	plt.yticks([0, 0.25, 0.5, 0.75, 1], fontsize=15)
+	plt.xticks([0, 1], ['Expt 1', 'Expt 2'], fontsize=16)
+	plt.yticks([0, 0.25, 0.5, 0.75, 1], fontsize=16)
 	plt.ylabel('Accuracy', fontsize=15)
 	plt.tight_layout()
 	if save:
@@ -297,7 +304,7 @@ def model_performance_across_models(result_dir: str,
 		save (bool, str): Whether to save the plot or not. Default: False
 
 	"""
-	experiment_name = result_dir.split('/')[1]
+	experiment_name = result_dir.split('/')[1].split('_')[0]
 	
 	# Load subject ceiling data
 	if ceiling_subfolder:
@@ -394,7 +401,7 @@ def additional_predictor_increase(result_dir: str,
 	Returns:
 
 	"""
-	experiment_name = result_dir.split('/')[1]
+	experiment_name = result_dir.split('/')[1].split('_')[0]
 
 	# Load model performance CV
 	cv_expt = pd.read_csv(result_dir +
@@ -417,7 +424,11 @@ def additional_predictor_increase(result_dir: str,
 		save_str_nan_models = 'with-nan-models_'
 	else:
 		save_str_nan_models = ''
-	
+		try:
+			cv_expt_increase = cv_expt_increase.reindex(order_additional_predictor_models, axis=1)
+		except:
+			pass
+			
 	pretty_model_names = [d_model_names[model] for model in cv_expt_increase.index.values]
 	
 	# Plot as heatmap with colorbar
@@ -456,3 +467,446 @@ def sort_and_find_word_of_interest(df: pd.DataFrame,
 	
 	# find word
 	return df_sorted.loc[df_sorted['word_lower'] == 'avalance']
+
+##### TABLES #####
+def predictor_table(result_dir_expt1: str,
+							 result_dir_expt2: str,
+							plot_date_tag: str,
+							model_name: str,
+							models_of_interest: list,
+							 rename_dict_models: typing.Union[dict, None] = None,
+							 data_subfolder: str = '2_monogamous_meanings',
+							 value_to_plot: str = 'median_CI50_spearman',
+							lower_CI_value: str = 'lower_CI2.5_spearman',
+							upper_CI_value: str = 'upper_CI97.5_spearman',
+							save: typing.Union[bool, str] = False, ):
+	"""
+	Make a table of the models with predictors.
+
+	Args:
+		result_dir_expt1 (str): Path to the results folder for experiment 1
+		result_dir_expt2 (str): Path to the results folder for experiment 2
+		plot_date_tag (str): Date tag for the plots
+		model_name (str): Name of the csv file where the models where stored (i.e., NAME-{})
+		models_of_interest (list): List of strings of specific models to plot
+		rename_dict_models (dict, optional): Dictionary to rename the models. Defaults to None.
+		data_subfolder (str): Path to the folder containing model performance data
+		value_to_plot (str): Which value to plot for the model performance data. Default: 'median_CI50_spearman'
+							by default, lower_CI2.5 and upper_CI97.5 are used as error bars.
+		lower_CI_value (str): Which value to use for the lower CI. Default: 'lower_CI2.5_spearman'
+		upper_CI_value (str): Which value to use for the upper CI. Default: 'upper_CI97.5_spearman'
+		save (bool, str): Whether to save the plot or not. Default: False
+
+	"""
+	
+	# Load data for both experiments
+	df_expt1 = pd.read_csv(result_dir_expt1 +
+						  data_subfolder +
+						  '/cv_summary_preds' +
+						  f'/across-models_df_cv_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+						  index_col=0)
+	df_expt2 = pd.read_csv(result_dir_expt2 +
+						   data_subfolder +
+						    '/cv_summary_preds' +
+							f'/across-models_df_cv_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+						   	index_col=0)
+
+	# Create new dataframe with first column "Experiment", and remaining columns as models
+	# Create table where lower_CI_value and upper_CI_value are denoted as a string [95% CI lower, 95% CI upper]
+	df_table = pd.DataFrame(columns=['Expt', *models_of_interest])
+	df_table['Expt'] = ['Expt 1', 'Expt 2']
+	
+	for model in models_of_interest:
+		try:
+			df_table.loc[0, model] = f'{df_expt1.loc[model, value_to_plot]:.2f} [95% CI {df_expt1.loc[model, lower_CI_value]:.2f}, {df_expt1.loc[model, upper_CI_value]:.2f}]'
+		except KeyError:
+			df_table.loc[0, model] = np.nan
+		try:
+			df_table.loc[1, model] = f'{df_expt2.loc[model, value_to_plot]:.2f} [95% CI {df_expt2.loc[model, lower_CI_value]:.2f}, {df_expt2.loc[model, upper_CI_value]:.2f}]'
+		except KeyError:
+			df_table.loc[1, model] = np.nan
+			
+	if rename_dict_models:
+		df_table.rename(columns=rename_dict_models, inplace=True)
+		
+	if model_name == 'additional-predictor':
+		df_table.rename(columns={'# synonyms and # meanings': 'Baseline'}, inplace=True)
+		
+	# Save table
+	if save:
+		model_savestr = '-'.join(models_of_interest)
+		if model_name == 'additional-predictor':
+			model_savestr = 'additional-predictor'
+		save_str = save + f'expt1-expt2_{value_to_plot}_{model_savestr}_{plot_date_tag}'
+		with open(save_str + '.txt', 'w') as f:
+			f.write((tabulate(df_table,
+					   headers='keys',
+					   tablefmt='latex',
+					   floatfmt='.2f',
+					   showindex=False,)))
+			f.close()
+
+
+def predictor_table_increase(result_dir_expt1: str,
+							 result_dir_expt2: str,
+							 plot_date_tag: str,
+							 model_name: str,
+							 models_of_interest: list,
+							 baseline_model: str = 'baseline_human',
+							 rename_dict_models: typing.Union[dict, None] = None,
+							 data_subfolder: str = '2_monogamous_meanings',
+							 value_to_plot: str = 'median_CI50_spearman',
+							 save: typing.Union[bool, str] = False, ):
+	"""
+	Make a table of the predictor models and compute % increase from baseline model.
+
+	Args:
+		result_dir_expt1 (str): Path to the results folder for experiment 1
+		result_dir_expt2 (str): Path to the results folder for experiment 2
+		plot_date_tag (str): Date tag for the plots
+		model_name (str): Name of the csv file where the models where stored (i.e., NAME-{})
+		models_of_interest (list): List of strings of specific models to plot
+		rename_dict_models (dict, optional): Dictionary to rename the models. Defaults to None.
+		data_subfolder (str): Path to the folder containing model performance data
+		value_to_plot (str): Which value to plot for the model performance data. Default: 'median_CI50_spearman'
+		save (bool, str): Whether to save the plot or not. Default: False
+
+	"""
+	
+	# Load data for both experiments
+	df_expt1 = pd.read_csv(result_dir_expt1 +
+						   data_subfolder +
+						   '/cv_summary_preds' +
+						   f'/across-models_df_cv_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+						   index_col=0)
+
+	df_expt2 = pd.read_csv(result_dir_expt2 +
+						   data_subfolder +
+						   '/cv_summary_preds' +
+						   f'/across-models_df_cv_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+						   index_col=0)
+	
+	# Add in empty rows for models that do not exist in both experiments
+	for model in models_of_interest:
+		if model not in df_expt1.index:
+			df_expt1.loc[model, 'median_CI50_spearman'] = np.nan
+		if model not in df_expt2.index:
+			df_expt2.loc[model, 'median_CI50_spearman'] = np.nan
+	
+	# Compute % increase from baseline model.
+	expt1_increase = (df_expt1.loc[models_of_interest, value_to_plot] - df_expt1.loc[
+		'baseline_human', value_to_plot]) / \
+					 df_expt1.loc[
+						 baseline_model, value_to_plot] * 100  # Same code as used in plotting: additional_predictor_increase func
+	
+	expt2_increase = (df_expt2.loc[models_of_interest, value_to_plot] - df_expt2.loc[
+		'baseline_human', value_to_plot]) / \
+					 df_expt2.loc[
+						 baseline_model, value_to_plot] * 100  # Same code as used in plotting: additional_predictor_increase func
+	
+	
+	
+	# Create new dataframe with first column "Expt", and remaining columns as models
+	# Create table where lower_CI_value and upper_CI_value are denoted as a string [95% CI lower, 95% CI upper]
+	df_table = pd.DataFrame(columns=['Expt', *models_of_interest])
+	df_table['Expt'] = ['Expt 1', 'Expt 2']
+	
+	for model in models_of_interest:
+		try:
+			df_table.loc[0, model] = f'{expt1_increase.loc[model]:.2f}%'
+		except KeyError:
+			df_table.loc[0, model] = np.nan
+		try:
+			df_table.loc[1, model] = f'{expt2_increase.loc[model]:.2f}%'
+		except KeyError:
+			df_table.loc[1, model] = np.nan
+	
+	if rename_dict_models:
+		df_table.rename(columns=rename_dict_models, inplace=True)
+	
+	# Save table
+	if save:
+		save_str = save + f'expt1-expt2_{value_to_plot}_increase-from-{baseline_model}_{plot_date_tag}'
+		with open(save_str + '.txt', 'w') as f:
+			f.write((tabulate(df_table,
+							  headers='keys',
+							  tablefmt='latex',
+							  floatfmt='.2f',
+							  showindex=False,)))
+			f.close()
+
+
+def predictor_table_one_expt(result_dir: str,
+							 plot_date_tag: str,
+							 model_name: str,
+							 models_of_interest: list,
+							 rename_dict_models: typing.Union[dict, None] = None,
+							  rename_dict_expt: typing.Union[dict, None] = None,
+							 data_subfolder: str = '2_monogamous_meanings',
+							 value_to_plot: str = 'median_CI50_spearman',
+							 lower_CI_value: str = 'lower_CI2.5_spearman',
+							 upper_CI_value: str = 'upper_CI97.5_spearman',
+							 save: typing.Union[bool, str] = False, ):
+	"""
+	Make a table of the critical predictor models (number of synonyms, number of meanings, and
+	number of synonyms and meanings), intended for use with one experiment.
+
+	Args:
+		result_dir (str): Path to the results folder for experiment 1
+		plot_date_tag (str): Date tag for the plots
+		model_name (str): Name of the csv file where the models where stored (i.e., NAME-{})
+		models_of_interest (list): List of strings of specific models to plot
+		rename_dict (dict, optional): Dictionary to rename the models. Defaults to None.
+		rename_dict_expt (dict, optional): Dictionary to rename the experiments. Defaults to None.
+		data_subfolder (str): Path to the folder containing model performance data
+		value_to_plot (str): Which value to plot for the model performance data. Default: 'median_CI50_spearman'
+							by default, lower_CI2.5 and upper_CI97.5 are used as error bars.
+		lower_CI_value (str): Which value to use for the lower CI. Default: 'lower_CI2.5_spearman'
+		upper_CI_value (str): Which value to use for the upper CI. Default: 'upper_CI97.5_spearman'
+		save (bool, str): Whether to save the plot or not. Default: False
+
+	"""
+	
+	# Load data for one experiment
+	experiment_name = result_dir.split('/')[1].split('_')[0]
+
+	df_expt = pd.read_csv(result_dir +
+						   data_subfolder +
+						   '/cv_summary_preds' +
+						   f'/across-models_df_cv_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+						   index_col=0)
+	
+	# Create new dataframe with first column "Expt", and remaining columns as models
+	# Create table where lower_CI_value and upper_CI_value are denoted as a string [95% CI lower, 95% CI upper]
+	df_table = pd.DataFrame(columns=['Expt', *models_of_interest])
+	df_table['Expt'] = [rename_dict_expt[experiment_name] if rename_dict_expt else experiment_name]
+	
+	for model in models_of_interest:
+		df_table.loc[
+			0, model] = f'{df_expt.loc[model, value_to_plot]:.2f} [95% CI {df_expt.loc[model, lower_CI_value]:.2f}, {df_expt.loc[model, upper_CI_value]:.2f}]'
+	if rename_dict_models:
+		df_table.rename(columns=rename_dict_models, inplace=True)
+	
+	# Save table
+	if save:
+		model_savestr = '-'.join(models_of_interest)
+		save_str = save + f'{experiment_name}_{value_to_plot}_{model_savestr}_{plot_date_tag}'
+		with open(save_str + '.txt', 'w') as f:
+			f.write((tabulate(df_table,
+							  headers='keys',
+							  tablefmt='latex',
+							  floatfmt='.2f',
+							  showindex=False,)))
+			f.close()
+	
+def overlapping_words_correlation(result_dir: str,
+								  data_subfolder: str,
+								  plot_date_tag: str,
+								  save: typing.Union[bool, str] = False,):
+	"""Make the table of correlation between overlapping words for expt 1 and expt2
+	
+	Args:
+		result_dir (str): Path to the results folder for experiment
+		data_subfolder (str): Path to the folder containing the correlation data
+		plot_date_tag (str): Date tag for the plots
+		
+		"""
+	
+	df_expt = pd.read_csv(result_dir +
+						   data_subfolder +
+						  f'/overlap_words_expt1_expt2_corr_{plot_date_tag}.csv')
+	
+	# Rename r to Pearson R and p to p-value
+	df_expt.rename(columns={'r': 'Pearson R', 'p': 'p-value', 'Unnamed: 0':'Norm'}, inplace=True)
+	df_expt = df_expt.set_index('Norm')
+
+	# Drop the accuracy-related rows (acc, hit_rate, false_alarm_rate and Google n-gram frequency) rows
+	df_expt = df_expt.drop(['acc', 'hit_rate', 'false_alarm_rate', 'Google n-gram frequency'], axis=0)
+	
+	# Reorder rows
+	df_expt = df_expt.reindex(['# meanings (human)', '# synonyms (human)',
+							   'Concreteness', 'Imageability', 'Familiarity', 'Valence', 'Arousal',])
+	df_expt = df_expt.reset_index(drop=False)
+	df_expt.rename(columns={'index': 'Norm'}, inplace=True)
+	
+	# Save table
+	with open(save + f'/overlap_words_expt1_expt2_corr_{plot_date_tag}.txt', 'w') as f:
+		f.write((tabulate(df_expt,
+						  headers='keys',
+						  tablefmt='latex',
+						  floatfmt=('.2f', '.2f', '.2e'),
+						  showindex=False,)))
+		f.close()
+
+
+def ANOVA_table(result_dir_expt1: str,
+				 result_dir_expt2: str,
+				 plot_date_tag: str,
+				 model_name: str,
+				drop_models_with: typing.Union[str, None] = None,
+				rename_dict_models: typing.Union[dict, None] = None,
+				 data_subfolder: str = '2_monogamous_meanings',
+				 save: typing.Union[bool, str] = False, ):
+	"""
+	Make a table of the predictor models and compute % increase from baseline model.
+
+	Args:
+		result_dir_expt1 (str): Path to the results folder for experiment 1
+		result_dir_expt2 (str): Path to the results folder for experiment 2
+		plot_date_tag (str): Date tag for the plots
+		model_name (str): Name of the csv file where the models where stored (i.e., NAME-{})
+		drop_models_with (str): Which models to drop from the table.
+		rename_dict_models (dict, optional): Dictionary to rename the models. Defaults to None.
+		data_subfolder (str): Path to the folder containing model performance data
+		value_to_plot (str): Which value to plot for the model performance data. Default: 'median_CI50_spearman'
+		save (bool, str): Whether to save the plot or not. Default: False
+
+	"""
+	
+	# Load data for both experiments
+	df_expt1 = pd.read_csv(result_dir_expt1 +
+						   data_subfolder +
+						   '/full_summary' +
+						   f'/summary_comp_anova_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+						   index_col=0)
+	
+	df_expt2 = pd.read_csv(result_dir_expt2 +
+						   data_subfolder +
+						   '/full_summary' +
+						   f'/summary_comp_anova_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+						   index_col=0)
+	
+	# Drop index 0
+	df_expt1 = df_expt1.drop(0)
+	df_expt2 = df_expt2.drop(0)
+	
+	# create a new index of numbers
+	df_expt1.index = range(len(df_expt1))
+	
+	# Drop columns 'df_diff' and 'ssr' and 'comparison_index'
+	df_expt1 = df_expt1.drop(['df_diff', 'ssr', 'comparison_index'], axis=1)
+	df_expt1['Expt'] = 'Expt 1'
+	df_expt2 = df_expt2.drop(['df_diff', 'ssr', 'comparison_index'], axis=1)
+	df_expt2['Expt'] = 'Expt 2'
+	
+	# Merge
+	df_expt = pd.concat([df_expt1, df_expt2], axis=0)
+	df_expt = df_expt.reset_index(drop=True)
+	
+	# If the string 'drop_models_with' is not None, drop the models with the string in the name
+	if drop_models_with is not None:
+		df_expt = df_expt.drop(df_expt.index[df_expt.model.str.contains(drop_models_with)])
+		
+	# If the dictionary 'rename_dict_models' is not None, rename the models and models_add_predictor
+	if rename_dict_models is not None:
+		df_expt.model = df_expt.model.replace(rename_dict_models)
+		df_expt.model_add_predictor = df_expt.model_add_predictor.replace(rename_dict_models)
+	
+	# Reorder columns
+	df_expt = df_expt[['Expt', 'model', 'model_add_predictor', 'F', 'Pr(>F)', 'ss_diff']]
+	
+	# Rename columns
+	df_expt.rename(columns={'model': 'Model', 'model_add_predictor': 'Model with additional predictor',
+							'F': 'F-statistic', 'ss_diff': 'SSR difference'}, inplace=True)
+	
+	if data_subfolder == '2_monogamous_meanings':
+		# Sort rows such that Num_Synonyms is before Num_Meanings
+		df_expt = df_expt.sort_values(by=['Model'], ascending=False)
+	
+	if data_subfolder == '3_additional_predictors':
+		# Sort rows according model with additional predictor
+		# First obtain the last part of the model name
+		df_expt['model_add_predictor_last_part'] = df_expt['Model with additional predictor'].str.split('+').str[-1].str.strip()
+		
+		df_expt = df_expt.sort_values(by=['model_add_predictor_last_part'], ascending=True)
+		
+		# Drop the last part of the model name
+		df_expt = df_expt.drop(['model_add_predictor_last_part'], axis=1)
+		
+	if save:
+		save_str = save + f'expt1-expt2_anova-{data_subfolder}_{plot_date_tag}'
+		with open(save_str + '.txt', 'w') as f:
+			f.write((tabulate(df_expt,
+							  headers='keys',
+							  tablefmt='latex',
+							  floatfmt=('.2f', '.2f', '.2f', '.2f', '.2e', '.2e'),
+							  showindex=False,
+							  )))
+			f.close()
+
+
+def stepwise_selection_count_table(result_dir_expt1: str,
+					result_dir_expt2: str,
+					plot_date_tag: str,
+					model_name: str,
+					rename_dict_features: typing.Union[dict, None] = None,
+					feature_order: typing.Union[list, None] = None,
+					data_subfolder: str = '4_stepwise_regression',
+					save: typing.Union[bool, str] = False, ):
+	"""
+	Make a table of how many times a predictor was included and how many times it was included as the first one.
+
+	Args:
+		result_dir_expt1 (str): Path to the results folder for experiment 1
+		result_dir_expt2 (str): Path to the results folder for experiment 2
+		plot_date_tag (str): Date tag for the plots
+		model_name (str): Name of the csv file where the models where stored (i.e., NAME-{})
+		models_of_interest (list): List of strings of specific models to plot
+		rename_dict_models (dict, optional): Dictionary to rename the models. Defaults to None.
+		data_subfolder (str): Path to the folder containing model performance data
+		value_to_plot (str): Which value to plot for the model performance data. Default: 'median_CI50_spearman'
+							by default, lower_CI2.5 and upper_CI97.5 are used as error bars.
+		lower_CI_value (str): Which value to use for the lower CI. Default: 'lower_CI2.5_spearman'
+		upper_CI_value (str): Which value to use for the upper CI. Default: 'upper_CI97.5_spearman'
+		save (bool, str): Whether to save the plot or not. Default: False
+
+	"""
+	
+	# Load data for both experiments
+	df_expt1 = pd.read_csv(result_dir_expt1 +
+						   data_subfolder +
+						   '/cv_summary_preds' +
+						   f'/across-models_df_cv_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+						   index_col=0)
+	df_expt2 = pd.read_csv(result_dir_expt2 +
+						   data_subfolder +
+						   '/cv_summary_preds' +
+						   f'/across-models_df_cv_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+						   index_col=0)
+	
+	# For each df, rename the columns
+	df_expt1 = df_expt1.rename(columns={'count_included':'Expt1\hspace{1.6cm}Predictor inclusion',
+										'count_included_first':'Expt1\hspace{1.6cm}Predictor inclusion as first predictor'}).set_index('predictor', drop=False)
+	df_expt2 = df_expt2.rename(columns={'count_included':'Expt2\hspace{1.6cm}Predictor inclusion',
+										'count_included_first':'Expt2\hspace{1.6cm}Predictor inclusion as first predictor'}).set_index('predictor', drop=False)
+	
+	# Concatenate the two dataframes
+	df_expt = pd.concat([df_expt1, df_expt2], axis=1)
+	df_expt = df_expt.rename(columns={'predictor':'Predictor'})
+	
+	# Rename names in predictor column
+	# Drop duplicate columns
+	df_expt = df_expt.loc[:, ~df_expt.columns.duplicated()]
+	
+	if rename_dict_features is not None:
+		df_expt['Predictor'] = [rename_dict_features[x] for x in df_expt['Predictor']]
+		df_expt.index = [rename_dict_features[x] for x in df_expt.index]
+	
+	if feature_order is not None:
+		df_expt = df_expt.reindex(feature_order)
+	
+	
+	# Save table
+	if save:
+		save_str = save + f'expt1-expt2_inclusion-count_{model_name}_{plot_date_tag}'
+		with open(save_str + '.txt', 'w') as f:
+			f.write((tabulate(df_expt,
+							  headers='keys',
+							  tablefmt='latex',
+							  floatfmt='.0f',
+							  showindex=False, )))
+			f.close()
+	
+	
+
+
