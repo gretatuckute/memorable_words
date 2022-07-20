@@ -37,7 +37,7 @@ If you found this repository or data useful, please cite:
               {Gibson}, E. and
               {Fedorenko}, E.},
     title = "{Intrinsically memorable words have unique associations with their meanings}",
-  journal = {Psyarxiv},
+  journal = {PsyArXiv},
      year = {2022},
     doi = {https://doi.org/10.31234/osf.io/p6kv9}
 }
