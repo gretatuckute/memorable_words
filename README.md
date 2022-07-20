@@ -14,9 +14,9 @@ conda env create -f environment.yml
 ## Data availability
 The word memorability data is available in /3_PREP_ANALYSES/:
 
-Experiment 1: *exp1_data_with_norms_reordered_20220708.csv* (2,109 rows according to experimental items as denoted in the columns *word_upper*. The *acc* column contains the word recognition accuracy. Additional columns contain metadata and feature norms)
+Experiment 1: [*exp1_data_with_norms_reordered_20220708.csv*](https://github.com/gretatuckute/memorable_words/blob/main/3_PREP_ANALYSES/exp1_data_with_norms_reordered_20220708.csv) (2,109 rows according to experimental items as denoted in the columns *word_upper*. The *acc* column contains the word recognition accuracy. Additional columns contain metadata and feature norms)
 
-Experiment 2: *exp2_data_with_norms_reordered_20220708.csv* (2,165 rows according to experimental items as denoted in the columns *word_upper*. The *acc* column contains the word recognition accuracy. Additional columns contain metadata and feature norms)
+Experiment 2: [*exp2_data_with_norms_reordered_20220708.csv*](https://github.com/gretatuckute/memorable_words/blob/main/3_PREP_ANALYSES/exp2_data_with_norms_reordered_20220708.csv) (2,165 rows according to experimental items as denoted in the columns *word_upper*. The *acc* column contains the word recognition accuracy. Additional columns contain metadata and feature norms)
 
 ## Analyses
 To analyze respectively Experiment 1 and Experiment 2, run [/4_ANALYZE/analyze_expt1.py](https://github.com/gretatuckute/memorable_words/blob/main/4_ANALYZE/analyze_expt1.py) and [/4_ANALYZE/analyze_expt2.py](https://github.com/gretatuckute/memorable_words/blob/main/4_ANALYZE/analyze_expt2.py).
@@ -29,5 +29,16 @@ To generate figures and tables for Experiment 1 and Experiment 2, run [/5_PLOT/g
 If you found this repository or data useful, please cite:
 
 ```
-Tuckute*, G., Mahowald*, K., Isola, P., Gibson, E., Oliva, A., & Fedorenko, E. (2022). Intrinsically memorable words have unique associations with their meanings. https://doi.org/10.31234/osf.io/p6kv9
+@ARTICLE{TuckuteMahowald2022,
+   author = {{Tuckute*}, G. and
+              {Mahowald*}, K. and
+              {Isola}, P. and
+              {Oliva}, A. and
+              {Gibson}, E. and
+              {Fedorenko}, E.},
+    title = "{Intrinsically memorable words have unique associations with their meanings}",
+  journal = {Psyarxiv},
+     year = 2022,
+    doi = https://doi.org/10.31234/osf.io/p6kv9
+}
 ```
