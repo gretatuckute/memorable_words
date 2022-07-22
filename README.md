@@ -1,6 +1,6 @@
 # Intrinsically memorable words have unique associations with their meanings
 
-Data and code accompanying the preprint: Tuckute*, G., Mahowald*, K., Isola, P., Gibson, E., Oliva, A., & Fedorenko, E. (2022). Intrinsically memorable words have unique associations with their meanings. https://doi.org/10.31234/osf.io/p6kv9
+Data and code accompanying the preprint: Tuckute*, G., Mahowald*, K., Isola, P., Oliva, A., Gibson, E., & Fedorenko, E. (2022). Intrinsically memorable words have unique associations with their meanings. https://doi.org/10.31234/osf.io/p6kv9
 
 What makes a word memorable? We collected word recognition accuracy for n=2,109 (Experiment 1) and n=2,165 (Experiment 2) words from more than 600 participants in each experiment. This repository makes the memorability data publicly available and provides code to investigate which features are predictive of memorability.
 
