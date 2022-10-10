@@ -3,6 +3,10 @@ data/.DS_Store
 .idea
 
 figure_compilation/**
+expt1_expt2_results/**
+expt1_results/**
+expt2_results/**
+
 
 
 # Byte-compiled / optimized / DLL files
