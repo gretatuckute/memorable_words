@@ -54,6 +54,10 @@ rename_dict_expt1 = {'# meanings (human)': 'num_meanings_human',
 					 'Imageability': 'imageability',
 					 'Valence': 'valence',
 					 'GloVe distinctiveness': 'glove_distinctiveness',
+					 'Log topic variability': 'log_topic_variability',
+					  'Log document frequency': 'log_document_frequency',
+					  'Log orthographic neighborhood size': 'log_orthographic_neighborhood_size',
+					  'Log phonological neighborhood size': 'log_phonological_neighborhood_size',
 					 }
 
 rename_dict_expt2 = {'# meanings (human)': 'num_meanings_human',
@@ -226,6 +230,59 @@ def preprocess_columns_in_df(df: pd.DataFrame,
 	
 	return df_preprocessed
 
+def drop_nans_from_df(df: pd.DataFrame,
+					  acc1: pd.DataFrame,
+					  acc2: pd.DataFrame,
+					  predictors: typing.Union[list, np.ndarray]):
+	"""
+	Drop rows or columns with NaNs from dataframe.
+
+	Args:
+		df (pd.DataFrame): dataframe with columns containing y (acc) and predictors (x) as specified in predictors
+        acc1 (pd.DataFrame): accuracy for half of the participants across words
+        acc2 (pd.DataFrame): accuracy for the other half of the participants across words
+        predictors (list): list of predictors (x) to check for NaNs in the df
+
+	Returns:
+		df (pd.DataFrame): dataframe with dropped columns
+		acc1 (pd.DataFrame): accuracy for half of the participants across words, with dropped columns
+		acc2 (pd.DataFrame): accuracy for the other half of the participants across words, with dropped columns
+		nan_info (dict): dictionary with indices and words corresponding to nans in the predictor df.
+
+	"""
+
+	# Check for nans in the df for any of the predictors and return lists of the indices and the nan words
+	if df[predictors].isnull().values.any():
+
+		# Get the indices of the nans of unique rows
+		nan_indices = df[predictors].index[df[predictors].isnull().any(axis=1)].tolist()
+
+		print(f'OBS: Number of nans in the predictors: {len(nan_indices)}\nDropping these rows from the dataframe.\n')
+
+		# Look into which words these nans are
+		nan_words = df.iloc[nan_indices]['word_lower'].values
+		print(f'OBS: Words with nans: {nan_words}')
+
+		# Drop the rows with nans
+		df = df.drop(df.index[nan_indices])
+
+		# Drop for the accuracies as well (columns)
+		acc1 = acc1.drop(acc1.columns[nan_indices], axis=1)
+		acc2 = acc2.drop(acc2.columns[nan_indices], axis=1)
+
+		# Assert than no nan words are in the accuracies
+		assert not acc1.columns.isin(nan_words).any()
+		assert not acc2.columns.isin(nan_words).any()
+
+		nan_info = {'nan_indices': nan_indices, 'nan_words': nan_words}
+
+	else:
+		print('No nans in the predictors')
+		nan_info = {'nan_indices': [], 'nan_words': []}
+
+	return df, acc1, acc2, nan_info
+
+
 
 def get_cv_score(df: pd.DataFrame,
 				 acc1: pd.DataFrame,
@@ -278,6 +335,16 @@ def get_cv_score(df: pd.DataFrame,
 		df_save (pd.DataFrame): dataframe with the CI summary and/or the values per split (1,000 iterations)
 
     """
+
+	# Check for nans in the df for any of the predictors and return lists of the indices and the nan words
+	if df[predictors].isnull().values.any():
+		# Get the indices of the nans
+		nan_indices = np.where(df[predictors].isnull().values)[0]
+
+		print(f'OBS: Number of nans in the predictors: {len(nan_indices)}\nHandle these prior to this function.\n')
+		assert nan_indices == []
+
+
 	# For subject consistency
 	subject_split_half_pearson_r = []
 	subject_split_half_spearman_r = []

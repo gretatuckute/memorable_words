@@ -1,20 +1,22 @@
 from utils import *
 
 ## SETTINGS ##
-Q0 = True # subject consistency
-Q1 = True # accuracy metrics
-Q2 = True # all baseline models
-Q3 = True # models for baseline + ONE additional predictor
-Q4 = True # forward-backward selection
+Q0 = False # subject consistency
+Q1 = False # accuracy metrics
+Q2 = False # all baseline models
+Q3 = False # models for baseline + ONE additional predictor
+Q4 = False # forward-backward selection
+Q5 = False # topic variability
+Q6 = True # orthographic/phonological neighborhood
 
 posthoc_stats = False
 
-save = True
+save = False
 np.random.seed(0)
 
-fname = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_20220708.csv"
-fname_accs1 = "../expt1_subject_splits/exp1_accs1_20220708.csv"
-fname_accs2 = "../expt1_subject_splits/exp1_accs2_20220708.csv"
+fname = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_20221010.csv"
+fname_accs1 = "../expt1_subject_splits/exp1_accs1_20221010.csv"
+fname_accs2 = "../expt1_subject_splits/exp1_accs2_20221010.csv"
 
 if __name__ == '__main__':
 	
@@ -87,6 +89,7 @@ if __name__ == '__main__':
 	## Q2: Baseline models ##
 	if Q2:
 		save_subfolder = '2_monogamous_meanings'
+
 		# HUMAN
 		df_meanings_human = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
 										 model_name='meanings_human',
@@ -123,7 +126,7 @@ if __name__ == '__main__':
 		m_synonyms_corpus = smf.ols('acc_demean ~ num_synonyms_wordnet_demean', data=df).fit()
 		m_baseline_corpus = smf.ols('acc_demean ~ num_meanings_wordnet_demean + num_synonyms_wordnet_demean', data=df).fit()
 	
-		## ANOVA COMPARISON WITH AMONG BASELINE MODELS ##
+		## ANOVA COMPARISON WITH BASELINE MODELS ##
 		
 		# HUMAN
 		# Compare Mem ~ meanings WITH Mem ~ synonyms + meanings
@@ -226,10 +229,18 @@ if __name__ == '__main__':
 		
 		if len(file_baseline) >= 1:
 			assert(np.allclose(df_baseline_human.select_dtypes(numerics).values, df_baseline_human_precomputed.select_dtypes(numerics).values))
-		
-		additional_predictors = ['concreteness',  'imageability', 'familiarity','valence','arousal',
-								 'log_subtlex_frequency', 'log_subtlex_cd', 'glove_distinctiveness', 'google_ngram_frequency', ]
-		
+
+		additional_predictors = ['log_topic_variability','log_document_frequency',
+								 'log_orthographic_neighborhood_size', 'log_phonological_neighborhood_size',
+								'concreteness',  'imageability', 'familiarity','valence','arousal',
+								 'log_subtlex_frequency', 'log_subtlex_cd', 'glove_distinctiveness', 'google_ngram_frequency',
+								 ]
+
+		# additional_predictors = ['concreteness',  'imageability', 'familiarity','valence','arousal',
+		# 						 'log_subtlex_frequency', 'log_subtlex_cd', 'glove_distinctiveness', 'google_ngram_frequency',
+		# 						 'log_topic_variability','log_document_frequency',
+		# 						 'log_orthographic_neighborhood_size', 'log_phonological_neighborhood_size']
+
 		lst_additional_predictors_cv = []
 		lst_additional_predictors_comp_anova = []
 		for pred in (additional_predictors):
@@ -330,8 +341,145 @@ if __name__ == '__main__':
 					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
 				fh.write(m_stepwise.summary().as_text())
 	
-	
-	
+	## Topic variability (and document frequency) ##
+	if Q5:
+		save_subfolder = '5_topic_variability' # maybe migrate to q2??
+
+	## Orthographical / phonological neighborhood size ##
+	if Q6:
+		save_subfolder = '6_orth_phon_neighborhood'
+
+		# Get a version of the df and acc files without nans
+		df_no_nan_orth_phon, acc1_no_nan_orth_phon, acc2_no_nan_orth_phon, nan_info_no_nan_orth_phon = \
+			drop_nans_from_df(df=df, acc1=acc1, acc2=acc2, predictors=['log_orthographic_neighborhood_size', 'log_phonological_neighborhood_size'])
+
+
+		df_orth = get_cv_score(df=df_no_nan_orth_phon,
+							   acc1=acc1_no_nan_orth_phon, acc2=acc2_no_nan_orth_phon,
+							   save=save, result_dir=RESULTDIR,
+							   model_name='orth_neighborhood',
+							   predictors=['log_orthographic_neighborhood_size'], save_subfolder=save_subfolder)
+
+		df_phon = get_cv_score(df=df_no_nan_orth_phon,
+							   acc1=acc1_no_nan_orth_phon, acc2=acc2_no_nan_orth_phon,
+							   save=save, result_dir=RESULTDIR,
+							   model_name='phon_neighborhood',
+							   predictors=['log_phonological_neighborhood_size'], save_subfolder=save_subfolder)
+
+
+		# Drop the words (using nan_indices) that were not included in the neighborhood size calculation
+		df_baseline_human_no_nans_orth_phon = get_cv_score(df=df_no_nan_orth_phon,
+														   acc1=acc1_no_nan_orth_phon, acc2=acc2_no_nan_orth_phon,
+														   save=save, result_dir=RESULTDIR,
+														   model_name='baseline_human_no_nans_orth_phon',
+														   predictors=['num_meanings_human', 'num_synonyms_human'], save_subfolder=save_subfolder)
+
+
+		# Fit models on the full dataset for model statistics
+
+		# Human baseline
+		m_baseline_human = smf.ols('acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean', data=df).fit()
+
+		# Orthographic neighborhood size
+		m_orth = smf.ols('acc_demean ~ log_orthographic_neighborhood_size_demean', data=df).fit()
+
+		# Phonological neighborhood size
+		m_phon = smf.ols('acc_demean ~ log_phonological_neighborhood_size_demean', data=df).fit()
+
+		# Human baseline plus orthographic neighborhood size
+		m_baseline_human_orth = smf.ols('acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + '
+										'log_orthographic_neighborhood_size_demean', data=df).fit()
+
+		# Human baseline plus phonological neighborhood size
+		m_baseline_human_phon = smf.ols('acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + '
+										'log_phonological_neighborhood_size_demean', data=df).fit()
+
+		# Human baseline plus orthographic and phonological neighborhood size
+		m_baseline_human_orth_phon = smf.ols('acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + '
+											 'log_orthographic_neighborhood_size_demean + '
+											 'log_phonological_neighborhood_size_demean', data=df).fit()
+
+
+		## ANOVA COMPARISON WITH BASELINE MODELS ##
+
+		# Compare Mem ~ synonyms + meanings WITH Mem ~ synonyms + meanings + orth_neighborhood
+		comp_baseline_human_orth = sm.stats.anova_lm(m_baseline_human, m_baseline_human_orth)
+		comp_baseline_human_orth['model'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean'
+		comp_baseline_human_orth[
+			'model_add_predictor'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + log_orthographic_neighborhood_size_demean'
+
+		# Compare Mem ~ synonyms + meanings WITH Mem ~ synonyms + meanings + phon_neighborhood
+		comp_baseline_human_phon = sm.stats.anova_lm(m_baseline_human, m_baseline_human_phon)
+		comp_baseline_human_phon['model'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean'
+		comp_baseline_human_phon[
+			'model_add_predictor'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + log_phonological_neighborhood_size_demean'
+
+		# Compare Mem ~ synonyms + meanings WITH Mem ~ synonyms + meanings + orth_neighborhood + phon_neighborhood
+		comp_baseline_human_orth_phon = sm.stats.anova_lm(m_baseline_human, m_baseline_human_orth_phon)
+		comp_baseline_human_orth_phon['model'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean'
+		comp_baseline_human_orth_phon[
+			'model_add_predictor'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + log_orthographic_neighborhood_size_demean + log_phonological_neighborhood_size_demean'
+
+		# Package the ANOVA model comparisons into one df
+		df_comp_anova = pd.concat([comp_baseline_human_orth, comp_baseline_human_phon, comp_baseline_human_orth_phon])
+
+		# Create 'comparison_index' column (two rows per comparison, so repeat the index twice)
+		df_comp_anova['comparison_index'] = (np.repeat(np.arange(len(df_comp_anova) / 2), 2))
+
+		# Reorganize columns: comparison_index, model, model_add_predictor, F, Pr(>F), ss_diff, df_diff, ssr
+		df_comp_anova = df_comp_anova[
+			['comparison_index', 'model', 'model_add_predictor', 'F', 'Pr(>F)', 'ss_diff', 'df_diff', 'ssr']]
+
+		if save:
+			df_comp_anova.to_csv(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_comp_anova_'
+								 f'NAME-baseline-human-orth-phon_'
+								 f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
+
+		if save:  # store the concatenated results across all baseline models
+
+			# Log
+			# Human baseline
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_baseline_human_'
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_baseline_human.summary().as_text())
+
+			# Orthographic neighborhood size
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_orth_'
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_orth.summary().as_text())
+
+			# Phonological neighborhood size
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_phon_'
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_phon.summary().as_text())
+
+			# Human baseline plus orthographic neighborhood size
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_baseline_human_orth_' 
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_baseline_human_orth.summary().as_text())
+
+			# Human baseline plus phonological neighborhood size
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_baseline_human_phon_' 
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_baseline_human_phon.summary().as_text())
+
+			# Human baseline plus orthographic and phonological neighborhood size
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_baseline_human_orth_phon_'
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_baseline_human_orth_phon.summary().as_text())
+
+
+
+
+
+
+
+
+
+
+
+
+
 	if posthoc_stats:
 		# Test human baseline vs CD
 		bootstrap_wrapper(result_dir=RESULTDIR,

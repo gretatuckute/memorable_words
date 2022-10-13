@@ -13,7 +13,7 @@ date_tag = now.strftime("%Y%m%d")
 save = True
 plot = True
 
-fname = "../1_GET_DATA/exp1_data_with_norms.csv"
+fname = "../1_GET_DATA/exp1_data_with_norms_20221010.csv"
 GLOVEDIR = '/Users/gt/Dropbox (MIT)/SemComp/features/database/glove_database/'
 
 
@@ -165,5 +165,5 @@ if __name__ == '__main__':
 	
 	df['GloVe distinctiveness'] = lst_distinctiveness
 	
-	df.to_csv("exp1_data_with_norms_w_glove.csv")
+	df.to_csv(f"exp1_data_with_norms_w_glove_{date_tag}.csv")
 	

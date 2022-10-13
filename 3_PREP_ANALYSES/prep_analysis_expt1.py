@@ -13,7 +13,7 @@ Load expt1 data (after the GloVe extraction) and rename/reorder the columns.
 ## SETTINGS ##
 save = True
 
-fname = "../2_OBTAIN_GLOVE/exp1_data_with_norms_w_glove.csv"
+fname = "../2_OBTAIN_GLOVE/exp1_data_with_norms_w_glove_20221010.csv"
 fname_accs1 = "../expt1_subject_splits/accs1.csv"
 fname_accs2 = "../expt1_subject_splits/accs2.csv"
 fname_word_order = "../expt1_subject_splits/word_order.txt"
@@ -32,7 +32,11 @@ if __name__ == '__main__':
 					 'valence': 'Valence', 'image': 'Imageability', 'fam': 'Familiarity',
 					 'concrete': 'Concreteness', 'arousal': 'Arousal',
 					 'correct rejections': 'correct_rejections', 'false alarms': 'false_alarms',
-					 'Word': 'word_upper'}, inplace=True)
+					 'Word': 'word_upper',
+					  'LgTV_T=1700': 'Log topic variability', 'LgDF': 'Log document frequency',
+					  'orth_neighborhood': 'Orthographic neighborhood size', 'phon_neighborhood': 'Phonological neighborhood size',
+					  'log_orth_neighborhood': 'Log orthographic neighborhood size', 'log_phon_neighborhood': 'Log phonological neighborhood size',
+					  }, inplace=True)
 	# Create word_lower
 	d['word_lower'] = d['word_upper'].str.lower()
 	
@@ -43,6 +47,8 @@ if __name__ == '__main__':
 					  'Log Subtlex frequency', 'Log Subtlex CD', 'Google n-gram frequency',
 					  'Concreteness', 'Imageability', 'Familiarity', 'Valence', 'Arousal',
 					  'GloVe distinctiveness',
+					  'Log topic variability', 'Log document frequency',
+					  'Log orthographic neighborhood size', 'Log phonological neighborhood size',
 					  'num_ratings_meanings', 'num_ratings_synonyms',]
 
 	d = d[cols_new_order]
