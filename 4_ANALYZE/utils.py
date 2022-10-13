@@ -576,13 +576,13 @@ def compute_acc_metrics_with_error(df: pd.DataFrame,
 								   result_dir: str = '',
 								   save_subfolder: str = None,
 								   save_str: str = None,
-								   error_type: str = 'CI',
+								   error_type: str = 'CI_of_median',
 								   CI: int = 95,
 								   save: bool = False, ):
 	"""
 	Compute accuracy metrics with error.
 	Input dataframe (df), assume that columns 'acc', 'hit.rate', 'false.alarm.rate' are present.
-	If error_type is CI (suggested!), compute the 50% percentile as well as the CI (as specified by CI).
+	If error_type is CI_of_median (suggested!), compute the 50% percentile as well as the CI (as specified by CI).
 	
 	Args:
 		df (pd.DataFrame): dataframe with columns 'acc', 'hit.rate', 'false.alarm.rate'
@@ -593,15 +593,57 @@ def compute_acc_metrics_with_error(df: pd.DataFrame,
 		CI (int): confidence interval
 
 	"""
-	
-	if error_type == 'CI':
-		CI_bound_lower = (100 - CI) / 2
-		CI_bound_upper = 100 - CI_bound_lower
+	CI_bound_lower = (100 - CI) / 2
+	CI_bound_upper = 100 - CI_bound_lower
+
+	if error_type == 'CI_of_the_data':
 		
-		# Get 5%, 50%, 95% CI for accuracy, hit.rate, false.alarm.rate
+		# Get 5%, 50%, 95% CI for accuracy, hit.rate, false.alarm.rate (this takes the percentiles of the data distribution itself, and not around the median)
 		acc_ci = np.percentile(df['acc'], [CI_bound_lower, 50, CI_bound_upper])
 		hit_rate_ci = np.percentile(df['hit_rate'], [CI_bound_lower, 50, CI_bound_upper])
 		fa_rate_ci = np.percentile(df['false_alarm_rate'], [CI_bound_lower, 50, CI_bound_upper])
+
+	elif error_type == 'CI_of_median':
+		# Split data into 2 halves, compute median of each half, and then compute CI around the median of the medians
+		n_bootstraps = 1000
+		bootstrapped_medians_acc = []
+		bootstrapped_medians_hit_rate = []
+		bootstrapped_medians_fa_rate = []
+		for i in range(n_bootstraps):
+			# Split data into 2 halves
+
+			# Accuracy
+			acc_1 = df['acc'].sample(frac=0.5, replace=False)
+			acc_2 = df['acc'].drop(acc_1.index)
+			# Compute median of each half
+			median_acc_1 = np.median(acc_1)
+			median_acc_2 = np.median(acc_2)
+
+			bootstrapped_medians_acc.append([median_acc_1, median_acc_2])
+
+			# Hit rate
+			hit_rate_1 = df['hit_rate'].sample(frac=0.5, replace=False)
+			hit_rate_2 = df['hit_rate'].drop(hit_rate_1.index)
+			# Compute median of each half
+			median_hit_rate_1 = np.median(hit_rate_1)
+			median_hit_rate_2 = np.median(hit_rate_2)
+
+			bootstrapped_medians_hit_rate.append([median_hit_rate_1, median_hit_rate_2])
+
+			# False alarm rate
+			fa_rate_1 = df['false_alarm_rate'].sample(frac=0.5, replace=False)
+			fa_rate_2 = df['false_alarm_rate'].drop(fa_rate_1.index)
+			# Compute median of each half
+			median_fa_rate_1 = np.median(fa_rate_1)
+			median_fa_rate_2 = np.median(fa_rate_2)
+
+			bootstrapped_medians_fa_rate.append([median_fa_rate_1, median_fa_rate_2])
+
+		# Compute CI around the median of the medians
+		acc_ci = np.percentile(bootstrapped_medians_acc, [CI_bound_lower, 50, CI_bound_upper])
+		hit_rate_ci = np.percentile(bootstrapped_medians_hit_rate, [CI_bound_lower, 50, CI_bound_upper])
+		fa_rate_ci = np.percentile(bootstrapped_medians_fa_rate, [CI_bound_lower, 50, CI_bound_upper])
+
 	else:
 		raise ValueError('Error type not recognized')
 	

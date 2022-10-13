@@ -2,16 +2,16 @@ from utils import *
 
 ## SETTINGS ##
 Q0 = False # subject consistency
-Q1 = False # accuracy metrics
+Q1 = True # accuracy metrics
 Q2 = False # all baseline models
 Q3 = False # models for baseline + ONE additional predictor
 Q4 = False # forward-backward selection
 Q5 = False # topic variability
-Q6 = True # orthographic/phonological neighborhood
+Q6 = False # orthographic/phonological neighborhood
 
 posthoc_stats = False
 
-save = False
+save = True
 np.random.seed(0)
 
 fname = "../3_PREP_ANALYSES/exp1_data_with_norms_reordered_20221010.csv"
@@ -34,7 +34,7 @@ if __name__ == '__main__':
 		
 	if Q1: # Obtain accuracy metrics (accuracy, hit rate, false alarm rate with CI error)
 		compute_acc_metrics_with_error(df=d,
-									   error_type='CI',
+									   error_type='CI_of_median',
 									   CI=95,
 									   result_dir=RESULTDIR,
 									   save_subfolder='1_acc_metrics',
