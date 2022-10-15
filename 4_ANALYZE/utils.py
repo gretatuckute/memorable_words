@@ -25,8 +25,11 @@ RESULT_subdirs = ['data_with_preprocessed_cols_used_for_analyses',
 				  '0_subject_consistency',
 				  '1_acc_metrics',
 				  '2_monogamous_meanings',
+				  '2_topic_variability',
 				  '3_additional_predictors',
 				  '4_stepwise_regression',
+				  '5_orth_phon_neighborhood',
+				  '6_freq_vs_meanings',
 				  'posthoc_bootstrap']
 
 RESULT_subfolders = ['cv_all_preds', # cross-validated model performance, across all cross-validation splits
@@ -367,7 +370,6 @@ def get_cv_score(df: pd.DataFrame,
 	num_words = acc1.shape[1]
 	num_words_train = int(
 		np.ceil(num_words / 2))  # for expt 1: 2190/2=1054.5, so round up to 1055 for training set, and 1054 for test
-	print(f'Number of splits: {num_subject_splits} with {num_words_train} words in the training set out of {num_words} words')
 
 	np.random.seed(0)
 	
@@ -388,7 +390,11 @@ def get_cv_score(df: pd.DataFrame,
 		# Randomly pick item (word) train/test indices
 		train_words_idxs = np.random.choice(num_words, size=num_words_train, replace=False, )
 		test_words_idxs = np.setdiff1d(np.arange(num_words), train_words_idxs)
-		
+
+		if i == 0:
+			print(f'Number of splits: {num_subject_splits} with train set: {len(train_words_idxs)} words and test set: {len(test_words_idxs)} '
+				  f'out of a total {num_words} words')
+
 		assert (len(np.unique(
 			list(test_words_idxs) + list(train_words_idxs))) == num_words)  # Make sure all words are used
 		assert (len(train_words_idxs) + len(test_words_idxs) == num_words)  # Make sure all words are used
