@@ -11,6 +11,7 @@ corr_predictors = True
 acc_metrics = True # 1 accuracy metrics
 monogamous_meanings = True # 2 monogamous meanings
 additional_predictors = True # 3 additional predictors
+freq_vs_meaning = True # 6 frequency vs meaning
 
 if __name__ == '__main__':
 	
@@ -189,5 +190,36 @@ if __name__ == '__main__':
 									  value_to_plot='median_CI50_spearman',
 									  baseline_model='baseline_human',
 									  save=f'{SAVEDIR}{save_subfolder}/')
+
+	###### Q6: What is the correlation between word frequency and number of meanings/synonyms? #####
+	if freq_vs_meaning:
+		save_subfolder = '6_freq_vs_meaning'
+
+		## First, make plots of frequency vs meaning/synonyms to show that those are correlated, but not the same
+		predictor_xs = ['log_subtlex_frequency']
+		predictor_ys = ['num_meanings_human', 'num_synonyms_human']
+
+
+		for predictor_x in predictor_xs:
+			for predictor_y in predictor_ys:
+				for normalization_setting in ['', '_demean', '_zscore']:
+					scatter_predictor_vs_predictor(df=df_expt1,
+												   predictor_x=predictor_x,
+												   predictor_y=predictor_y,
+												   normalization_setting=normalization_setting,
+												   save=f'{SAVEDIR}{save_subfolder}/',
+												   plot_date_tag=plot_date_tag,
+												   rename_dict_inv=rename_dict_expt1_inv,)
+
+					scatter_predictor_vs_predictor(df=df_expt2,
+												   predictor_x=predictor_x,
+												   predictor_y=predictor_y,
+												   normalization_setting=normalization_setting,
+												   save=f'{SAVEDIR}{save_subfolder}/',
+												   plot_date_tag=plot_date_tag,
+												   rename_dict_inv=rename_dict_expt2_inv, )
+
+
+
 	
 	

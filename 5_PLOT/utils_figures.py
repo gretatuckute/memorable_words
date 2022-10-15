@@ -153,6 +153,53 @@ def acc_vs_predictor(df: pd.DataFrame,
 	plt.show()
 
 
+def scatter_predictor_vs_predictor(df: pd.DataFrame,
+								 predictor_x: str,
+								 predictor_y: str,
+								 normalization_setting: str = '',
+								 save: typing.Union[bool, str] = False,
+								 rename_dict_inv: dict = {},
+								 plot_date_tag: str = '',):
+
+	"""
+	Produce scatter plots of predictor versus predictor.
+
+	Args:
+		df (pd.DataFrame): dataframe with columns predictor_x, predictor_y
+		predictor_x (str): predictor to plot on x axis
+		predictor_y (str): predictor to plot on y axis
+		normalization_setting (str): normalization setting to plot for both predictors
+		save (bool, str): if True, save the plot, if str, save to that folder
+		rename_dict_inv (dict): dictionary to rename the predictor for titles
+		plot_date_tag (str): tag to add to plot name
+	"""
+
+	# Get experiment name
+	if len(df) == 2109:
+		expt = 'expt1'
+	else:
+		expt = 'expt2'
+
+	fig, ax = plt.subplots(figsize=(6, 6))
+	ax.scatter(df[f'{predictor_x}{normalization_setting}'], df[f'{predictor_y}{normalization_setting}'], alpha=0.3, linewidths=0, s=15, color='black')
+	ax.set_xlabel(rename_dict_inv[predictor_x])
+	ax.set_ylabel(rename_dict_inv[predictor_y])
+	ax.set_title(f'{rename_dict_inv[predictor_y]} vs {rename_dict_expt1_inv[predictor_x]}')
+	plt.tight_layout()
+	# Get r and p and annotate
+	r, p = pearsonr(df[f'{predictor_x}{normalization_setting}'], df[f'{predictor_y}{normalization_setting}'])
+	plt.text(0.9, 0.1, f'r={r:.2f}, p={p:.2f}', horizontalalignment='center', verticalalignment='center',
+			 transform=plt.gca().transAxes)
+	if save:
+		normalization_setting_str = ['' if normalization_setting == '' else f'{normalization_setting}'][0]
+		save_str = f'{save}/{expt}_{predictor_x}{normalization_setting_str}_vs_{predictor_y}{normalization_setting_str}{plot_date_tag}'
+		plt.savefig(f'{save_str}.png', dpi=120)
+		plt.savefig(f'{save_str}.svg', dpi=120, )
+		plt.savefig(f'{save_str}.pdf', dpi=120, )
+	plt.show()
+
+
+
 def plot_full_heatmap(df: pd.DataFrame,
 					  title: str = 'Correlation heatmap',
 					  nan_predictors: typing.Union[list, None] = None,
