@@ -42,6 +42,7 @@ d_predictors = {'expt1': ['# synonyms (human)', '# meanings (human)',
 d_model_names = {'synonyms_human': '# synonyms',
 				 'meanings_human': '# meanings',
 				 'baseline_human': '# synonyms and # meanings',
+				 'baseline_human_no_nans_topic': '# synonyms and # meanings (limited)',
 				 'synonyms_wordnet': '# synonyms (Wordnet)',
 				 'meanings_wordnet': '# meanings (Wordnet)',
 				 'baseline_corpus': '# synonyms and # meanings (Wordnet)',
@@ -54,14 +55,21 @@ d_model_names = {'synonyms_human': '# synonyms',
 				'baseline_human_log_subtlex_cd': 'Log Subtlex CD',
 				'baseline_human_glove_distinctiveness': 'GloVe distinctiveness',
 				'baseline_human_google_ngram_frequency': 'Google n-gram frequency',
+				 'CD': 'Log Subtlex CD',
+				 'CD_no_nans_topic': 'Log Subtlex CD (limited)',
+				 'topicvar': 'Log TASA TV'
 }
 
 d_model_colors = {'synonyms_human': '#f6a0a0',
 				  'meanings_human': '#b2ccff',
 				  'baseline_human': '#d9baf5',
+					'baseline_human_no_nans_topic': '#d9baf5',
 				  'synonyms_wordnet': '#d94343',
 				  'meanings_wordnet': '#477cd4',
-				  'baseline_corpus': '#9d52da',}
+				  'baseline_corpus': '#9d52da',
+				  'CD': '#63D667',
+				  'CD_no_nans_topic': '#63D667',
+				  'topicvar': '#B6E8B8',}
 
 d_acc_metrics_names = {'acc': 'Accuracy',
 					   'hit.rate': 'Hit rate',

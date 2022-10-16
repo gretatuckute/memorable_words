@@ -4,14 +4,15 @@ from utils_figures import *
 RESULTDIR_expt1 = '../expt1_results/'
 RESULTDIR_expt2 = '../expt2_results/'
 SAVEDIR = '../expt1_expt2_results/'
-plot_date_tag = '20220708' # which date analyses were run on
+plot_date_tag = '20221016' # which date analyses were run on
 
-corr_heatmap = True
-corr_predictors = True
-acc_metrics = True # 1 accuracy metrics
-monogamous_meanings = True # 2 monogamous meanings
-additional_predictors = True # 3 additional predictors
-freq_vs_meaning = True # 6 frequency vs meaning
+corr_heatmap = False
+corr_predictors = False
+acc_metrics = False # 1 accuracy metrics
+monogamous_meanings = False # 2 monogamous meanings
+additional_predictors = False # 3 additional predictors
+
+freq_vs_meaning = False # 6 frequency vs meaning
 
 if __name__ == '__main__':
 	
@@ -106,55 +107,82 @@ if __name__ == '__main__':
 		make_save_subfolder(SAVEDIR, save_subfolder)
 	
 		# Human synonym/meaning predictors
+		# model_performance_across_models(result_dir=RESULTDIR_expt1,
+		# 								data_subfolder='2_monogamous_meanings',
+		# 								plot_date_tag=plot_date_tag,
+		# 								ceiling_subfolder='0_subject_consistency',
+		# 								model_name='baseline-human-corpus',
+		# 								models_of_interest=['synonyms_human', 'meanings_human', 'baseline_human'],
+		# 								value_to_plot='median_CI50_spearman',
+		# 								lower_CI_value='lower_CI2.5_spearman',
+		# 								upper_CI_value='upper_CI97.5_spearman',
+		# 								save=f'{SAVEDIR}{save_subfolder}/'
+		# 								)
+		#
+		# model_performance_across_models(result_dir=RESULTDIR_expt2,
+		# 								data_subfolder='2_monogamous_meanings',
+		# 								plot_date_tag=plot_date_tag,
+		# 								ceiling_subfolder='0_subject_consistency',
+		# 								model_name='baseline-human-corpus',
+		# 								models_of_interest=['synonyms_human', 'meanings_human', 'baseline_human'],
+		# 								value_to_plot='median_CI50_spearman',
+		# 								lower_CI_value='lower_CI2.5_spearman',
+		# 								upper_CI_value='upper_CI97.5_spearman',
+		# 								save=f'{SAVEDIR}{save_subfolder}/'
+		# 								)
+		#
+		# # Corpus synonym/meaning predictors (for expt 1)
+		# model_performance_across_models(result_dir=RESULTDIR_expt1,
+		# 								data_subfolder='2_monogamous_meanings',
+		# 								plot_date_tag=plot_date_tag,
+		# 								ceiling_subfolder='0_subject_consistency',
+		# 								model_name='baseline-human-corpus',
+		# 								models_of_interest=['synonyms_wordnet', 'meanings_wordnet', 'baseline_corpus'],
+		# 								value_to_plot='median_CI50_spearman',
+		# 								lower_CI_value='lower_CI2.5_spearman',
+		# 								upper_CI_value='upper_CI97.5_spearman',
+		# 								save=f'{SAVEDIR}{save_subfolder}/'
+		# 								)
+		#
+		# model_performance_across_models(result_dir=RESULTDIR_expt1,
+		# 								data_subfolder='2_monogamous_meanings',
+		# 								plot_date_tag=plot_date_tag,
+		# 								ceiling_subfolder='0_subject_consistency',
+		# 								model_name='baseline-human-corpus',
+		# 								models_of_interest=['synonyms_human', 'meanings_human', 'baseline_human',
+		# 													'synonyms_wordnet', 'meanings_wordnet', 'baseline_corpus'],
+		# 								value_to_plot='median_CI50_spearman',
+		# 								lower_CI_value='lower_CI2.5_spearman',
+		# 								upper_CI_value='upper_CI97.5_spearman',
+		# 								save=f'{SAVEDIR}{save_subfolder}/'
+		# 								)
+		#
+		# SI: Full dataset: baseline model and contextual diversity (for expt 1)
 		model_performance_across_models(result_dir=RESULTDIR_expt1,
 										data_subfolder='2_monogamous_meanings',
 										plot_date_tag=plot_date_tag,
 										ceiling_subfolder='0_subject_consistency',
-										model_name='baseline-human-corpus',
-										models_of_interest=['synonyms_human', 'meanings_human', 'baseline_human'],
+										model_name='baseline-human-topic',
+										models_of_interest=['baseline_human', 'CD'],
 										value_to_plot='median_CI50_spearman',
 										lower_CI_value='lower_CI2.5_spearman',
 										upper_CI_value='upper_CI97.5_spearman',
 										save=f'{SAVEDIR}{save_subfolder}/'
 										)
-	
-		model_performance_across_models(result_dir=RESULTDIR_expt2,
-										data_subfolder='2_monogamous_meanings',
-										plot_date_tag=plot_date_tag,
-										ceiling_subfolder='0_subject_consistency',
-										model_name='baseline-human-corpus',
-										models_of_interest=['synonyms_human', 'meanings_human', 'baseline_human'],
-										value_to_plot='median_CI50_spearman',
-										lower_CI_value='lower_CI2.5_spearman',
-										upper_CI_value='upper_CI97.5_spearman',
-										save=f'{SAVEDIR}{save_subfolder}/'
-										)
-	
-		# Corpus synonym/meaning predictors (for expt 1)
+
+		# SI: Limited dataset (based on the topicvar predictor): baseline model, contextual diversity, topic variability (for expt 1)
 		model_performance_across_models(result_dir=RESULTDIR_expt1,
 										data_subfolder='2_monogamous_meanings',
 										plot_date_tag=plot_date_tag,
 										ceiling_subfolder='0_subject_consistency',
-										model_name='baseline-human-corpus',
-										models_of_interest=['synonyms_wordnet', 'meanings_wordnet', 'baseline_corpus'],
+										model_name='baseline-human-topic',
+										models_of_interest=['baseline_human_no_nans_topic', 'CD_no_nans_topic', 'topicvar'],
 										value_to_plot='median_CI50_spearman',
 										lower_CI_value='lower_CI2.5_spearman',
 										upper_CI_value='upper_CI97.5_spearman',
 										save=f'{SAVEDIR}{save_subfolder}/'
 										)
-	
-		model_performance_across_models(result_dir=RESULTDIR_expt1,
-										data_subfolder='2_monogamous_meanings',
-										plot_date_tag=plot_date_tag,
-										ceiling_subfolder='0_subject_consistency',
-										model_name='baseline-human-corpus',
-										models_of_interest=['synonyms_human', 'meanings_human', 'baseline_human',
-															'synonyms_wordnet', 'meanings_wordnet', 'baseline_corpus'],
-										value_to_plot='median_CI50_spearman',
-										lower_CI_value='lower_CI2.5_spearman',
-										upper_CI_value='upper_CI97.5_spearman',
-										save=f'{SAVEDIR}{save_subfolder}/'
-										)
+
 
 	##### Q3: How do additional predictors change the accuracy? #####
 	if additional_predictors:

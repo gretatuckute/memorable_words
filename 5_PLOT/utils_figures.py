@@ -406,6 +406,9 @@ def model_performance_across_models(result_dir: str,
 	plt.yticks([0, 0.25, 0.5, 0.75, 1], fontsize=15)
 	plt.ylabel('Cross-validated model performance', fontsize=15)
 	plt.title(f'{experiment_name}', fontsize=16)
+	# x and y ticks not showing, fix
+	plt.tick_params(axis='x', which='major', direction='out', length=5, bottom=True, width=1.5)
+	plt.tick_params(axis='y', which='major', direction='out', length=5, left=True, width=1.5)
 	
 	# add a horizontal line with shaded regions
 	if ceiling_subfolder:
@@ -413,11 +416,12 @@ def model_performance_across_models(result_dir: str,
 		ax.fill_between([num_models[0] - 0.6, num_models[-1] + 0.6], np.repeat(subject_split_expt['lower_CI2.5_spearman'].values, 2),
 						np.repeat(subject_split_expt['upper_CI97.5_spearman'].values, 2),
 						color='gainsboro', alpha=0.8)
-	plt.tight_layout()
+	plt.tight_layout(pad=2)
 	if save:
 		model_savestr = '-'.join(models_of_interest)
 		plt.savefig(save + f'{experiment_name}_{value_to_plot}_{model_savestr}_{plot_date_tag}.png', dpi=300)
 		plt.savefig(save + f'{experiment_name}_{value_to_plot}_{model_savestr}_{plot_date_tag}.svg', dpi=300)
+
 	plt.show()
 	
 def additional_predictor_increase(result_dir: str,
