@@ -112,7 +112,7 @@ def create_result_directories(result_dir: str,
 	
 	for subdir in subdirs:
 		# If the subdirectory starts with a number (besides 0 and 1), create subdirectories for output from linear models
-		if subdir[0] in ['2', '3', '4']:  # subdirectories containing model results
+		if subdir[0] in ['2', '3', '4', '5', '6']:  # subdirectories containing model results
 			for subfolder in subfolders:
 				if not os.path.exists(result_dir + subdir + '/' + subfolder):
 					os.makedirs(result_dir + subdir + '/' + subfolder, exist_ok=True)
@@ -518,6 +518,9 @@ def get_cv_score(df: pd.DataFrame,
 			df_save['demean_x'] = [demean_x] * len(df_save)
 			df_save['demean_y'] = [demean_y] * len(df_save)
 			df_save['permute'] = [permute] * len(df_save)
+			df_save['n_splits'] = [num_subject_splits] * len(df_save)
+			df_save['n_train_items'] = [len(train_words_idxs)] * len(df_save)
+			df_save['n_test_items'] = [len(test_words_idxs)] * len(df_save)
 			
 			df_save.to_csv(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
 						   f'cv_summary_preds/'

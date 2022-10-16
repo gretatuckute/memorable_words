@@ -6,7 +6,7 @@ Q1 = False # accuracy metrics
 Q2 = False # all baseline models
 Q3 = False # models for baseline + ONE additional predictor
 Q4 = False # forward-backward selection
-Q5 = False # orthographic/phonological neighborhood
+Q5 = True # orthographic/phonological neighborhood
 Q6 = True # disambiguate frequency vs meaning
 
 posthoc_stats = False
@@ -88,19 +88,19 @@ if __name__ == '__main__':
 	
 	## Q2: Baseline models ##
 	if Q2:
-		# save_subfolder = '2_monogamous_meanings'
+		save_subfolder = '2_monogamous_meanings'
 		#
-		# # HUMAN
-		# df_meanings_human = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
-		# 								 model_name='meanings_human',
-		# 								 predictors=['num_meanings_human'], save_subfolder=save_subfolder)
-		# df_synonyms_human = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
-		# 								 model_name='synonyms_human',
-		# 								 predictors=['num_synonyms_human'], save_subfolder=save_subfolder)
-		# df_baseline_human = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
-		# 								 model_name='baseline_human',
-		# 								 predictors=['num_meanings_human', 'num_synonyms_human'], save_subfolder=save_subfolder)
-		#
+		# HUMAN
+		df_meanings_human = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
+										 model_name='meanings_human',
+										 predictors=['num_meanings_human'], save_subfolder=save_subfolder)
+		df_synonyms_human = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
+										 model_name='synonyms_human',
+										 predictors=['num_synonyms_human'], save_subfolder=save_subfolder)
+		df_baseline_human = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
+										 model_name='baseline_human',
+										 predictors=['num_meanings_human', 'num_synonyms_human'], save_subfolder=save_subfolder)
+
 		# # CORPUS
 		# df_meanings_corpus = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
 		# 								 model_name='meanings_wordnet',
@@ -197,19 +197,18 @@ if __name__ == '__main__':
 		# 		fh.write(m_baseline_corpus.summary().as_text())
 		#
 		# # ## CD ##
-		# df_CD = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
-		# 					 model_name='CD', predictors=['log_subtlex_cd'], save_subfolder=save_subfolder)
-		#
-		# # Fit models on the full dataset for model statistics
-		# m_cd = smf.ols('acc_demean ~ log_subtlex_cd_demean', data=df).fit()
-		#
-		# if save:
-		# 	with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_cd_'
-		# 			  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
-		# 		fh.write(m_cd.summary().as_text())
+		df_CD = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
+							 model_name='CD', predictors=['log_subtlex_cd'], save_subfolder=save_subfolder)
+
+		# Fit models on the full dataset for model statistics
+		m_cd = smf.ols('acc_demean ~ log_subtlex_cd_demean', data=df).fit()
+
+		if save:
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_cd_'
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_cd.summary().as_text())
 
 		## Topic variability (and document frequency) ##
-		save_subfolder = '2_topic_variability'
 
 		# Run the topic variability predictors. However, this one has NaNs, so first obtain the dataset without NaNs:
 		df_no_nan_topic, acc1_no_nan_topic, acc2_no_nan_topic, nan_info_no_nan_topic = \
@@ -228,6 +227,7 @@ if __name__ == '__main__':
 								   model_name='docfreq',
 								   predictors=['log_document_frequency'], save_subfolder=save_subfolder)
 
+
 		# Fit models using baseline model, but with limited set of words (due to the NaNs)
 		df_baseline_human_no_nans_topic = get_cv_score(df=df_no_nan_topic,
 													   acc1=acc1_no_nan_topic, acc2=acc2_no_nan_topic,
@@ -245,8 +245,17 @@ if __name__ == '__main__':
 											   				'log_topic_variability'],
 											   save_subfolder=save_subfolder)
 
+		# Also run CD on the limited set
+		df_CD_no_nans_topic = get_cv_score(df=df_no_nan_topic,
+										   acc1=acc1_no_nan_topic, acc2=acc2_no_nan_topic,
+										   save=save, result_dir=RESULTDIR,
+										   model_name='CD_no_nans_topic',
+										   predictors=['log_subtlex_cd'], save_subfolder=save_subfolder)
+
 		# Merge all CV dfs
-		df_baseline_human_topic_concat = pd.concat([df_topic, df_docfreq, df_baseline_human_no_nans_topic, df_baseline_human_topic])
+		df_baseline_human_topic_concat = pd.concat([df_meanings_human, df_synonyms_human, df_baseline_human,
+													df_CD,
+													df_topic, df_docfreq, df_baseline_human_no_nans_topic, df_baseline_human_topic, df_CD_no_nans_topic],)
 
 		if save:  # store the concatenated results across all baseline models
 			df_baseline_human_topic_concat.to_csv(
@@ -600,7 +609,9 @@ if __name__ == '__main__':
 		plt.show()
 
 		# Divide into 3 bins based on frequency with equal number of items in each bin
-		df['log_subtlex_frequency_bin'] = pd.qcut(df['log_subtlex_frequency'], 3, labels=['low', 'medium', 'high'])
+		df['log_subtlex_frequency_bin'] = pd.qcut(df.rank(method='first')['log_subtlex_frequency'], 3,
+												  labels=['low', 'medium', 'high'])
+
 
 		# Get count of number of items in each bin and the mean and standard deviation of the frequency
 		df_freq_bin = df.groupby('log_subtlex_frequency_bin').agg(
