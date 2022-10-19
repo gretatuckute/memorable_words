@@ -2,12 +2,12 @@ from utils import *
 
 ## SETTINGS ##
 Q0 = False # subject consistency
-Q1 = False # accuracy metrics
+Q1 = True # accuracy metrics
 Q2 = False # all baseline models
 Q3 = False # models for baseline + ONE additional predictor
 Q4 = False # forward-backward selection
-Q5 = True # orthographic/phonological neighborhood
-Q6 = True # disambiguate frequency vs meaning
+Q5 = False # orthographic/phonological neighborhood
+Q6 = False # disambiguate frequency vs meaning
 
 posthoc_stats = False
 
@@ -197,16 +197,16 @@ if __name__ == '__main__':
 		# 		fh.write(m_baseline_corpus.summary().as_text())
 		#
 		# # ## CD ##
-		df_CD = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
-							 model_name='CD', predictors=['log_subtlex_cd'], save_subfolder=save_subfolder)
-
-		# Fit models on the full dataset for model statistics
-		m_cd = smf.ols('acc_demean ~ log_subtlex_cd_demean', data=df).fit()
-
-		if save:
-			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_cd_'
-					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
-				fh.write(m_cd.summary().as_text())
+		# df_CD = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
+		# 					 model_name='CD', predictors=['log_subtlex_cd'], save_subfolder=save_subfolder)
+		#
+		# # Fit models on the full dataset for model statistics
+		# m_cd = smf.ols('acc_demean ~ log_subtlex_cd_demean', data=df).fit()
+		#
+		# if save:
+		# 	with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_cd_'
+		# 			  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+		# 		fh.write(m_cd.summary().as_text())
 
 		## Topic variability (and document frequency) ##
 
@@ -214,6 +214,9 @@ if __name__ == '__main__':
 		df_no_nan_topic, acc1_no_nan_topic, acc2_no_nan_topic, nan_info_no_nan_topic = \
 			drop_nans_from_df(df=df, acc1=acc1, acc2=acc2,
 							  predictors=['log_topic_variability', 'log_document_frequency'])
+
+		# Print correlation between topic variability and our predictors
+		df_no_nan_topic.corr()
 
 		df_topic = get_cv_score(df=df_no_nan_topic,
 							   acc1=acc1_no_nan_topic, acc2=acc2_no_nan_topic,
@@ -561,7 +564,7 @@ if __name__ == '__main__':
 			df_orth_phon_concat.to_csv(
 				f'{RESULTDIR}/{save_subfolder}/'
 				f'cv_summary_preds/'
-				f'across-models_df_cv_NAME-baseline-human-topic_'
+				f'across-models_df_cv_NAME-baseline-human-orth-phon_'
 				f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
 
 			# Log

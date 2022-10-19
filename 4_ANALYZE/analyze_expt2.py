@@ -12,9 +12,9 @@ posthoc_stats = False
 save = True
 np.random.seed(0)
 
-fname = "../3_PREP_ANALYSES/exp2_data_with_norms_reordered_20220708.csv"
-fname_accs1 = "../expt2_subject_splits/exp2_accs1_20220708.csv"
-fname_accs2 = "../expt2_subject_splits/exp2_accs2_20220708.csv"
+fname = "../3_PREP_ANALYSES/exp2_data_with_norms_reordered_20221019.csv"
+fname_accs1 = "../expt2_subject_splits/exp2_accs1_20221019.csv"
+fname_accs2 = "../expt2_subject_splits/exp2_accs2_20221019.csv"
 
 if __name__ == '__main__':
 	
@@ -32,11 +32,11 @@ if __name__ == '__main__':
 		
 	if Q1: # Obtain accuracy metrics (accuracy, hit rate, false alarm rate with CI error)
 		compute_acc_metrics_with_error(df=d,
-									   error_type='CI',
+									   error_type='CI_of_median',
 									   CI=95,
 									   result_dir=RESULTDIR,
 									   save_subfolder='1_acc_metrics',
-									   save_str='expt2_acc_metrics',
+									   save_str='expt1_acc_metrics',
 									   save=save)
 		
 	## Fit linear models ##
