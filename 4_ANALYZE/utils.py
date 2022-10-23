@@ -702,8 +702,24 @@ def get_split_half_subject_consistency(df: pd.DataFrame,
 									save_subfolder='0_subject_consistency',
 									save=False,
 									predictors=['num_meanings_human'], return_CI_summary_df=False)
-	
-	plt.hist(df_subject_split.subject_split_half_spearman_r.values)
+
+	plt.figure()
+	plt.hist(df_subject_split.subject_split_half_spearman_r.values, bins=20, color='grey')
+	# plt.axvline(x=df_subject_split.subject_split_half_spearman_r.median(), color='red')
+	plt.xlabel('Participant split half Spearman correlation', size=14)
+	plt.ylabel('Split count', size=14)
+	# Make labels and ticks bigger
+	plt.tick_params(axis='both', which='major', labelsize=14)
+	plt.tick_params(axis='both', which='minor', labelsize=14)
+	plt.tight_layout()
+	if save:
+		plt.savefig(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
+					f'subject_split_corr_{date_tag}.svg', dpi=120)
+		plt.savefig(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
+					f'subject_split_corr_{date_tag}.png', dpi=120)
+		print(f'Saved subject split half correlation histogram to {result_dir}'
+			  f'{save_subfolder + "/" if save_subfolder else ""}/'
+			  f'subject_split_corr_{date_tag}.png')
 	plt.show()
 	
 	# Manually extract the spearman R among acc1 and acc2 and compute the CI
