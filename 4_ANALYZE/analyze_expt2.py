@@ -2,11 +2,11 @@ from utils import *
 
 ## SETTINGS ##
 Q0 = True # subject consistency
-Q1 = False # accuracy metrics
+Q1 = True # accuracy metrics
 Q2 = True # all baseline models
 Q3 = True # models for baseline + ONE additional predictor
 Q4 = True # forward-backward selection
-Q5 = False # orthographic/phonological neighborhood
+Q5 = True # orthographic/phonological neighborhood
 Q6 = True # disambiguate frequency vs meaning
 
 posthoc_stats = False
@@ -14,9 +14,9 @@ posthoc_stats = False
 save = True
 np.random.seed(0)
 
-fname = "../3_PREP_ANALYSES/exp2_data_with_norms_reordered_20221019.csv"
-fname_accs1 = "../expt2_subject_splits/exp2_accs1_20221019.csv"
-fname_accs2 = "../expt2_subject_splits/exp2_accs2_20221019.csv"
+fname = "../3_PREP_ANALYSES/exp2_data_with_norms_reordered_20221029.csv"
+fname_accs1 = "../expt2_subject_splits/exp2_accs1_20221029.csv"
+fname_accs2 = "../expt2_subject_splits/exp2_accs2_20221029.csv"
 
 if __name__ == '__main__':
 	
@@ -170,134 +170,6 @@ if __name__ == '__main__':
 				fh.write(m_google_ngram.summary().as_text())
 
 
-		## Topic variability (and document frequency) ##
-
-		# Run the topic variability predictors. However, this one has NaNs, so first obtain the dataset without NaNs:
-		df_no_nan_topic, acc1_no_nan_topic, acc2_no_nan_topic, nan_info_no_nan_topic = \
-			drop_nans_from_df(df=df, acc1=acc1, acc2=acc2,
-							  predictors=['log_topic_variability', 'log_document_frequency'])
-
-		# Save this version of the dataset
-		if save:
-			df_no_nan_topic.to_csv(f'{RESULTDIR}/'
-					  f'data_with_preprocessed_cols_used_for_analyses/'
-					  f'{fname.split("/")[-1].split(".")[0]}_preprocessed_cols_no_nan_topic.csv')
-
-		df_topic = get_cv_score(df=df_no_nan_topic,
-							   acc1=acc1_no_nan_topic, acc2=acc2_no_nan_topic,
-							   save=save, result_dir=RESULTDIR,
-							   model_name='topicvar',
-							   predictors=['log_topic_variability'], save_subfolder=save_subfolder)
-
-		df_docfreq = get_cv_score(df=df_no_nan_topic,
-								   acc1=acc1_no_nan_topic, acc2=acc2_no_nan_topic,
-								   save=save, result_dir=RESULTDIR,
-								   model_name='docfreq',
-								   predictors=['log_document_frequency'], save_subfolder=save_subfolder)
-
-
-		# Fit models using baseline model, but with limited set of words (due to the NaNs)
-		df_baseline_human_no_nans_topic = get_cv_score(df=df_no_nan_topic,
-													   acc1=acc1_no_nan_topic, acc2=acc2_no_nan_topic,
-													   save=save, result_dir=RESULTDIR,
-													   model_name='baseline_human_no_nans_topic',
-													   predictors=['num_meanings_human', 'num_synonyms_human'],
-													   save_subfolder=save_subfolder)
-
-		# Model with baseline predictors and topic variability
-		df_baseline_human_topic = get_cv_score(df=df_no_nan_topic,
-											   acc1=acc1_no_nan_topic, acc2=acc2_no_nan_topic,
-											   save=save, result_dir=RESULTDIR,
-											   model_name='baseline_human_topic',
-											   predictors=['num_meanings_human', 'num_synonyms_human',
-											   				'log_topic_variability'],
-											   save_subfolder=save_subfolder)
-
-		# Also run CD on the limited set
-		df_CD_no_nans_topic = get_cv_score(df=df_no_nan_topic,
-										   acc1=acc1_no_nan_topic, acc2=acc2_no_nan_topic,
-										   save=save, result_dir=RESULTDIR,
-										   model_name='CD_no_nans_topic',
-										   predictors=['log_subtlex_cd'], save_subfolder=save_subfolder)
-
-		# Merge all CV dfs
-		df_baseline_human_topic_concat = pd.concat([df_meanings_human, df_synonyms_human, df_baseline_human,
-													df_CD,
-													df_topic, df_docfreq, df_baseline_human_no_nans_topic, df_baseline_human_topic, df_CD_no_nans_topic],)
-
-		if save:  # store the concatenated results across all baseline models
-			df_baseline_human_topic_concat.to_csv(
-				f'{RESULTDIR}/{save_subfolder}/'
-				f'cv_summary_preds/'
-				f'across-models_df_cv_NAME-baseline-human-topic_'
-				f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
-
-
-		# Fit models on the full dataset for model statistics
-
-		# Human baseline
-		m_baseline_human = smf.ols('acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean', data=df_no_nan_topic).fit()
-
-		# Topic variability
-		m_topic = smf.ols('acc_demean ~ log_topic_variability_demean', data=df_no_nan_topic).fit()
-
-		# Document frequency
-		m_docfreq = smf.ols('acc_demean ~ log_document_frequency_demean', data=df_no_nan_topic).fit()
-
-		# Topic variability and human baseline
-		m_baseline_human_topic = smf.ols('acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + '
-										 'log_topic_variability_demean', data=df_no_nan_topic).fit()
-
-
-		## ANOVA COMPARISON WITH BASELINE MODELS ##
-
-		# Compare Mem ~ synonyms + meanings WITH Mem ~ synonyms + meanings + orth_neighborhood
-		comp_baseline_human_orth = sm.stats.anova_lm(m_baseline_human, m_baseline_human_topic)
-		comp_baseline_human_orth['model'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean'
-		comp_baseline_human_orth[
-			'model_add_predictor'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + log_topic_variability_demean'
-
-
-		# Package the ANOVA model comparisons into one df
-		df_comp_anova = comp_baseline_human_orth
-
-		# Create 'comparison_index' column (two rows per comparison, so repeat the index twice)
-		df_comp_anova['comparison_index'] = (np.repeat(np.arange(len(df_comp_anova) / 2), 2))
-
-		# Reorganize columns: comparison_index, model, model_add_predictor, F, Pr(>F), ss_diff, df_diff, ssr
-		df_comp_anova = df_comp_anova[
-			['comparison_index', 'model', 'model_add_predictor', 'F', 'Pr(>F)', 'ss_diff', 'df_diff', 'ssr']]
-
-
-		if save:
-			df_comp_anova.to_csv(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_comp_anova_'
-								 f'NAME-baseline-human-topic_'
-								 f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
-
-
-			# Log
-			# Human baseline
-			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_baseline_human_'
-					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
-				fh.write(m_baseline_human.summary().as_text())
-
-			# Topic variability
-			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_topic_'
-					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
-				fh.write(m_topic.summary().as_text())
-
-			# Document frequency
-			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_docfreq_'
-					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
-				fh.write(m_docfreq.summary().as_text())
-
-			# Topic variability and human baseline
-			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_baseline_human_topic_'
-					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
-				fh.write(m_baseline_human_topic.summary().as_text())
-
-
-
 		
 	## 3. Do additional factors contribute to word memorability?
 	if Q3:
@@ -319,7 +191,7 @@ if __name__ == '__main__':
 								   data=df).fit()
 		
 		if len(file_baseline) >= 1:
-			assert(np.allclose(df_baseline_human.select_dtypes(numerics).values, df_baseline_human_precomputed.select_dtypes(numerics).values))
+			assert(np.allclose(df_baseline_human['median_CI50_spearman'].values, df_baseline_human_precomputed['median_CI50_spearman'].values))
 		
 		additional_predictors = ['concreteness',  'imageability', 'familiarity','valence','arousal',
 								 'google_ngram_frequency']
@@ -380,12 +252,21 @@ if __name__ == '__main__':
 	## Forward-backward selection ##
 	if Q4:
 		save_subfolder = '4_stepwise_regression'
+
+		# # Exclude the topic, document, orthographic, and phonological predictors
+		all_predictors_renamed_no_nan_predictors = [pred for pred in all_predictors_renamed if pred not in
+													['log_topic_variability', 'log_document_frequency',
+													 'log_orthographic_neighborhood_size', 'log_phonological_neighborhood_size']]
+		all_predictors_renamed_demean_no_nan_predictors = [pred for pred in all_predictors_renamed_demean if pred not in
+														['log_topic_variability_demean', 'log_document_frequency_demean',
+														 'log_orthographic_neighborhood_size_demean',
+														 'log_phonological_neighborhood_size_demean']]
 		
 		# Run within train and test splits (CV)
 		df_stepwise, included_features_across_splits = \
 			get_cv_score_w_stepwise_regression(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
 											   model_name='stepwise',
-											   predictors=all_predictors_renamed,
+											   predictors=all_predictors_renamed_no_nan_predictors,
 											   save_subfolder=save_subfolder)
 		
 		# Analyze the most frequently occurring models
@@ -410,7 +291,7 @@ if __name__ == '__main__':
 				f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
 		
 		# Full model: stepwise regression on the full dataset, use demeaned variables:
-		features_full, pvalues_full = stepwise_selection(X=X_full_demean,
+		features_full, pvalues_full = stepwise_selection(X=X_full_demean[all_predictors_renamed_demean_no_nan_predictors],
 														 y=y_full_demean,
 														 verbose=True)  # uses all predictors in X
 		print(f'Resulting features based on full model fit (not CV): {features_full}')
@@ -587,7 +468,7 @@ if __name__ == '__main__':
 
 			# Get count of number of items in each bin and the mean and standard deviation of the frequency
 			df_freq_bin = df.groupby('frequency_bin').agg(
-				{'log_subtlex_frequency': ['count', 'mean', 'std']})
+				{freq_metric: ['count', 'mean', 'std']})
 			print(df_freq_bin)
 
 			# Get count of number of items in each bin and the mean and standard deviation of the number of meanings
@@ -662,6 +543,9 @@ if __name__ == '__main__':
 					f'cv_summary_preds/'
 					f'across-models_df_cv_NAME-freq-bins-{freq_metric}_'
 					f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
+
+
+
 
 
 

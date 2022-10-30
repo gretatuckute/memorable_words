@@ -29,7 +29,7 @@ RESULT_subdirs = ['data_with_preprocessed_cols_used_for_analyses',
 				  '4_stepwise_regression',
 				  '5_orth_phon_neighborhood',
 				  '6_freq_vs_meanings',
-				  'posthoc_bootstrap']
+				  'posthoc_ttest']
 
 RESULT_subfolders = ['cv_all_preds', # cross-validated model performance, across all cross-validation splits
 					 'cv_summary_preds', # summary of cross-validated model performance
@@ -69,7 +69,12 @@ rename_dict_expt2 = {'# meanings (human)': 'num_meanings_human',
 					 'Concreteness': 'concreteness',
 					 'Familiarity': 'familiarity',
 					 'Imageability': 'imageability',
-					 'Valence': 'valence', }
+					 'Valence': 'valence',
+					 'Log topic variability': 'log_topic_variability',
+					 'Log document frequency': 'log_document_frequency',
+					 'Log orthographic neighborhood size': 'log_orthographic_neighborhood_size',
+					 'Log phonological neighborhood size': 'log_phonological_neighborhood_size',
+					 }
 
 rename_dict_expt1_inv = {v: k for k, v in rename_dict_expt1.items()}
 rename_dict_expt2_inv = {v: k for k, v in rename_dict_expt2.items()}
@@ -1145,6 +1150,80 @@ def bootstrap_wrapper(result_dir: str,
 		print(f'Saved stats file to {result_dir}/'
 			  f'posthoc_boostrap/'
 			  f'boostrap-{n_bootstrap}_{model1}-{model2}_{datetag}.csv')
+
+
+def posthoc_ttest(result_dir: str,
+					  save_subfolder1: str,
+					  save_subfolder2: str,
+					  model1: str,
+					  model2: str,
+					  datetag: str,
+					  demeanx: bool = True,
+					  demeany: bool = True,
+					  val_of_interest: str = 'held_out_subject_set_spearman_r',
+					  save: bool = True, ):
+	"""
+	Function for independent two-sided t-test comparing the Spearman rho values across all 1,000 splits between two models
+
+	Args:
+		save_subfolder1 (str): subfolder to fetch data from for model1
+		save_subfolder2 (str): subfolder to fetch data from for model2
+		model1 (str): name of model1
+		model2 (str): name of model2
+		datetag (str): date tag to append to filename
+		demeanx (bool): whether x was demeaned in analysis (default: True)
+		demeany (bool): whether y was demeaned in analysis (default: True)
+		val_of_interest (str): which value to use for bootstrapping
+		save (bool): whether to save statistics based on bootstrapping to csv
+
+	"""
+
+	# Loop into the save subfolder of interest, and fetch the CV prediction values for model 1 and model 2
+	df_cv_all_model1 = pd.read_csv(f'{result_dir}/'
+								   f'{save_subfolder1}/'
+								   f'cv_all_preds/'
+								   f'df_cv-all_NAME-{model1}_demeanx-{demeanx}_demeany-{demeany}_permute-False_{datetag}.csv')
+
+	df_cv_all_model2 = pd.read_csv(f'{result_dir}/'
+								   f'{save_subfolder2}/'
+								   f'cv_all_preds/'
+								   f'df_cv-all_NAME-{model2}_demeanx-{demeanx}_demeany-{demeany}_permute-False_{datetag}.csv')
+
+
+	t, p = stats.ttest_ind(df_cv_all_model1[val_of_interest].values,
+					df_cv_all_model2[val_of_interest].values)
+
+	# Compute degrees of freedom, e.g., https://vitalflux.com/two-sample-t-test-formula-examples/
+	dof = len(df_cv_all_model1[val_of_interest].values) + len(df_cv_all_model2[val_of_interest].values) - 2
+
+	# Compute Cohen's d, e.g., https://stackoverflow.com/questions/21532471/how-to-calculate-cohens-d-in-python
+	cohens_d = (df_cv_all_model1[val_of_interest].mean() - df_cv_all_model2[val_of_interest].mean()) / np.sqrt(
+		(df_cv_all_model1[val_of_interest].var() + df_cv_all_model2[val_of_interest].var()) / 2)
+
+	# Package
+	df_stats = pd.DataFrame({'model1': model1,
+							 'model2': model2,
+							 # Include median of the two models' val of interest
+							 'model1_true_median': df_cv_all_model1[val_of_interest].median(),
+							 'model2_true_median': df_cv_all_model2[val_of_interest].median(),
+							 't': t,
+							 'p': p,
+							 'dof': dof,
+							 'cohens_d': cohens_d,
+							 'demeanx': demeanx,
+							 'demeany': demeany,
+							 'val_of_interest': val_of_interest,
+							 'datetag': datetag}, index=[0])
+
+	# Save
+	if save:
+		df_stats.to_csv(f'{result_dir}/'
+						f'posthoc_ttest/'
+						f'ttest_{model1}-{model2}_{datetag}.csv')
+		print(f'Saved stats file to {result_dir}/'
+			  f'posthoc_ttest/'
+			  f'ttest_{model1}-{model2}_{datetag}.csv')
+
 
 
 def pairwise_model_comparison_comp_boostrap(model1_val: typing.Union[np.ndarray, list],

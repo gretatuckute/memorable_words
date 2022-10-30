@@ -4,15 +4,15 @@ from utils_figures import *
 RESULTDIR_expt1 = '../expt1_results/'
 RESULTDIR_expt2 = '../expt2_results/'
 SAVEDIR = '../expt1_expt2_results/'
-plot_date_tag = '20221016' # which date analyses were run on
+plot_date_tag = '20221029' # which date analyses were run on
 
 corr_heatmap = False
 corr_predictors = False
 acc_metrics = False # 1 accuracy metrics
 monogamous_meanings = False # 2 monogamous meanings
 additional_predictors = False # 3 additional predictors
-
-freq_vs_meaning = False # 6 frequency vs meaning
+orth_phon = False # 5 orthographic and phonological predictors
+freq_vs_meaning = True # 6 frequency vs meaning
 
 if __name__ == '__main__':
 	
@@ -219,33 +219,96 @@ if __name__ == '__main__':
 									  baseline_model='baseline_human',
 									  save=f'{SAVEDIR}{save_subfolder}/')
 
+	###### Q5: How do orthography and phonology predictors do? #####
+	if orth_phon:
+		save_subfolder = '5_orth_phon_neighborhood'
+		make_save_subfolder(SAVEDIR, save_subfolder)
+
+		# Q5: Orthography
+		model_performance_across_models(result_dir=RESULTDIR_expt1,
+										data_subfolder='5_orth_phon_neighborhood',
+										plot_date_tag=plot_date_tag,
+										ceiling_subfolder='0_subject_consistency',
+										model_name='baseline-human-orth-phon',
+										models_of_interest=['baseline_human_no_nans_orth_phon','orth_neighborhood', 'phon_neighborhood'],
+										value_to_plot='median_CI50_spearman',
+										lower_CI_value='lower_CI2.5_spearman',
+										upper_CI_value='upper_CI97.5_spearman',
+										ylim=[-0.1,1],
+										save=f'{SAVEDIR}{save_subfolder}/'
+										)
+
+		model_performance_across_models(result_dir=RESULTDIR_expt2,
+										data_subfolder='5_orth_phon_neighborhood',
+										plot_date_tag=plot_date_tag,
+										ceiling_subfolder='0_subject_consistency',
+										model_name='baseline-human-orth-phon',
+										models_of_interest=['baseline_human_no_nans_orth_phon','orth_neighborhood', 'phon_neighborhood'],
+										value_to_plot='median_CI50_spearman',
+										lower_CI_value='lower_CI2.5_spearman',
+										upper_CI_value='upper_CI97.5_spearman',
+										ylim=[-0.1, 1],
+										save=f'{SAVEDIR}{save_subfolder}/'
+										)
+
 	###### Q6: What is the correlation between word frequency and number of meanings/synonyms? #####
 	if freq_vs_meaning:
-		save_subfolder = '6_freq_vs_meaning'
+		save_subfolder = '6_freq_vs_meanings'
 
 		## First, make plots of frequency vs meaning/synonyms to show that those are correlated, but not the same
-		predictor_xs = ['log_subtlex_frequency']
-		predictor_ys = ['num_meanings_human', 'num_synonyms_human']
+		# NOT IN USE
+		# predictor_xs = ['log_subtlex_frequency']
+		# predictor_ys = ['num_meanings_human', 'num_synonyms_human']
+		#
+		#
+		# for predictor_x in predictor_xs:
+		# 	for predictor_y in predictor_ys:
+		# 		for normalization_setting in ['', '_demean', '_zscore']:
+		# 			scatter_predictor_vs_predictor(df=df_expt1,
+		# 										   predictor_x=predictor_x,
+		# 										   predictor_y=predictor_y,
+		# 										   normalization_setting=normalization_setting,
+		# 										   save=f'{SAVEDIR}{save_subfolder}/',
+		# 										   plot_date_tag=plot_date_tag,
+		# 										   rename_dict_inv=rename_dict_expt1_inv,)
+		#
+		# 			scatter_predictor_vs_predictor(df=df_expt2,
+		# 										   predictor_x=predictor_x,
+		# 										   predictor_y=predictor_y,
+		# 										   normalization_setting=normalization_setting,
+		# 										   save=f'{SAVEDIR}{save_subfolder}/',
+		# 										   plot_date_tag=plot_date_tag,
+		# 										   rename_dict_inv=rename_dict_expt2_inv, )
 
+		## Make barplots of baseline model performance in the frequency chunks
+		# For Expt 1, we have two frequency metrics
+		freq_metrics = ['log_subtlex_frequency', 'google_ngram_frequency']
 
-		for predictor_x in predictor_xs:
-			for predictor_y in predictor_ys:
-				for normalization_setting in ['', '_demean', '_zscore']:
-					scatter_predictor_vs_predictor(df=df_expt1,
-												   predictor_x=predictor_x,
-												   predictor_y=predictor_y,
-												   normalization_setting=normalization_setting,
-												   save=f'{SAVEDIR}{save_subfolder}/',
-												   plot_date_tag=plot_date_tag,
-												   rename_dict_inv=rename_dict_expt1_inv,)
+		for freq_metric in freq_metrics:
+			model_performance_across_models(result_dir=RESULTDIR_expt1,
+											data_subfolder=save_subfolder,
+											plot_date_tag=plot_date_tag,
+											ceiling_subfolder='0_subject_consistency',
+											model_name=f'freq-bins-{freq_metric}',
+											models_of_interest=['baseline_human_low_freq_bin', 'baseline_human_medium_freq_bin', 'baseline_human_high_freq_bin'],
+											value_to_plot='median_CI50_spearman',
+											lower_CI_value='lower_CI2.5_spearman',
+											upper_CI_value='upper_CI97.5_spearman',
+											save=f'{SAVEDIR}{save_subfolder}/'
+											)
 
-					scatter_predictor_vs_predictor(df=df_expt2,
-												   predictor_x=predictor_x,
-												   predictor_y=predictor_y,
-												   normalization_setting=normalization_setting,
-												   save=f'{SAVEDIR}{save_subfolder}/',
-												   plot_date_tag=plot_date_tag,
-												   rename_dict_inv=rename_dict_expt2_inv, )
+		# For Expt 2, we only have one frequency metric
+		model_performance_across_models(result_dir=RESULTDIR_expt2,
+										data_subfolder=save_subfolder,
+										plot_date_tag=plot_date_tag,
+										ceiling_subfolder='0_subject_consistency',
+										model_name='freq-bins-google_ngram_frequency',
+										models_of_interest=['baseline_human_low_freq_bin', 'baseline_human_medium_freq_bin', 'baseline_human_high_freq_bin'],
+										value_to_plot='median_CI50_spearman',
+										lower_CI_value='lower_CI2.5_spearman',
+										upper_CI_value='upper_CI97.5_spearman',
+										save=f'{SAVEDIR}{save_subfolder}/'
+										)
 
 
 

@@ -317,6 +317,8 @@ def accuracy_barplot(result_dir_expt1: str,
 	plt.xticks([0, 1], ['Expt 1', 'Expt 2'], fontsize=16)
 	plt.yticks([0, 0.25, 0.5, 0.75, 1], fontsize=16)
 	plt.ylabel('Accuracy', fontsize=15)
+	plt.tick_params(axis='x', which='major', direction='out', length=5, bottom=True, width=1.5)
+	plt.tick_params(axis='y', which='major', direction='out', length=5, left=True, width=1.5)
 	plt.tight_layout()
 	if save:
 		plt.savefig(save + f'expt1_expt2_{acc_metric}_barplot_{plot_date_tag}.png', dpi=300)
@@ -333,6 +335,7 @@ def model_performance_across_models(result_dir: str,
 									value_to_plot: str = 'median_CI50_spearman',
 									lower_CI_value: str = 'lower_CI2.5_spearman',
 									upper_CI_value: str = 'upper_CI97.5_spearman',
+									ylim: typing.Union[list, None] = [0, 1],
 									save: typing.Union[bool, str] = False, ):
 	"""
 	Plot CV model performance (value_to_plot) as barplots for each model of interest.
@@ -400,7 +403,8 @@ def model_performance_across_models(result_dir: str,
 			values_to_plot,
 			yerr=yerr_expt,
 			color=model_colors, width=0.6, )
-	plt.ylim([0, 1])
+	if ylim:
+		plt.ylim(ylim)
 	plt.xlim([-0.5, len(models_of_interest) - 0.5])
 	plt.xticks(num_models, pretty_model_names, fontsize=16, rotation=45)
 	plt.yticks([0, 0.25, 0.5, 0.75, 1], fontsize=15)
@@ -419,6 +423,8 @@ def model_performance_across_models(result_dir: str,
 	plt.tight_layout(pad=2)
 	if save:
 		model_savestr = '-'.join(models_of_interest)
+		if 'freq-bins' in model_name:
+			model_savestr = f'{model_name}_{model_savestr}'
 		plt.savefig(save + f'{experiment_name}_{value_to_plot}_{model_savestr}_{plot_date_tag}.png', dpi=300)
 		plt.savefig(save + f'{experiment_name}_{value_to_plot}_{model_savestr}_{plot_date_tag}.svg', dpi=300)
 
@@ -588,6 +594,8 @@ def predictor_table(result_dir_expt1: str,
 		model_savestr = '-'.join(models_of_interest)
 		if model_name == 'additional-predictor':
 			model_savestr = 'additional-predictor'
+		if 'freq-bins' in model_name:
+			model_savestr = f'{model_name}_{model_savestr}'
 		save_str = save + f'expt1-expt2_{value_to_plot}_{model_savestr}_{plot_date_tag}'
 		with open(save_str + '.txt', 'w') as f:
 			f.write((tabulate(df_table,
@@ -721,11 +729,18 @@ def predictor_table_one_expt(result_dir: str,
 	# Load data for one experiment
 	experiment_name = result_dir.split('/')[1].split('_')[0]
 
-	df_expt = pd.read_csv(result_dir +
-						   data_subfolder +
-						   '/cv_summary_preds' +
-						   f'/across-models_df_cv_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
-						   index_col=0)
+	try: # If concatenated into one dataframe
+		df_expt = pd.read_csv(result_dir +
+							   data_subfolder +
+							   '/cv_summary_preds' +
+							   f'/across-models_df_cv_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+							   index_col=0)
+	except: # If just stored as its own dataframe
+		df_expt = pd.read_csv(result_dir +
+							  data_subfolder +
+							  '/cv_summary_preds' +
+							  f'/df_cv-summary_NAME-{model_name}_demeanx-True_demeany-True_permute-False_{plot_date_tag}.csv',
+							  index_col=0)
 	
 	# Create new dataframe with first column "Expt", and remaining columns as models
 	# Create table where lower_CI_value and upper_CI_value are denoted as a string [95% CI lower, 95% CI upper]
@@ -741,6 +756,8 @@ def predictor_table_one_expt(result_dir: str,
 	# Save table
 	if save:
 		model_savestr = '-'.join(models_of_interest)
+		if 'freq-bins' in model_name:
+			model_savestr = f'{model_name}_{model_savestr}'
 		save_str = save + f'{experiment_name}_{value_to_plot}_{model_savestr}_{plot_date_tag}'
 		with open(save_str + '.txt', 'w') as f:
 			f.write((tabulate(df_table,
