@@ -13,7 +13,7 @@ Load expt2 data and rename/reorder the columns.
 ## SETTINGS ##
 save = True
 
-fname = "../1_GET_DATA/exp2_data_with_norms.csv"
+fname = "../1_GET_DATA/exp2_data_with_norms_20221010.csv"
 fname_accs1 = "../expt2_subject_splits/accs1.csv"
 fname_accs2 = "../expt2_subject_splits/accs2.csv"
 fname_word_order = "../expt2_subject_splits/word_order_pos.txt" # take POS into account
@@ -34,7 +34,13 @@ if __name__ == '__main__':
 					  'word': 'word_lower', 'WORD': 'word_upper',
 					  'Article': 'article',
 					  'SyntCat': 'syntactic_category', 'Category': 'category',
-					  'subcat1': 'subcategory_1', 'subcat2': 'subcategory_2', 'subcat3': 'subcategory_3'}, inplace=True)
+					  'subcat1': 'subcategory_1', 'subcat2': 'subcategory_2', 'subcat3': 'subcategory_3',
+					  'LgTV_T=1700': 'Log topic variability', 'LgDF': 'Log document frequency',
+					  'orth_neighborhood': 'Orthographic neighborhood size',
+					  'phon_neighborhood': 'Phonological neighborhood size',
+					  'log_orth_neighborhood': 'Log orthographic neighborhood size',
+					  'log_phon_neighborhood': 'Log phonological neighborhood size',
+					  }, inplace=True)
 	
 	d['word_lower'] = d['word_lower'].str.lower()
 	d['word_lower_no_article'] = d['word_lower_no_article'].str.lower()
@@ -62,7 +68,11 @@ if __name__ == '__main__':
 					  '# meanings (human)', '# synonyms (human)',
 					  'Log Subtlex frequency', 'Log Subtlex CD', 'Google n-gram frequency',
 					  'Concreteness', 'Imageability', 'Familiarity', 'Valence', 'Arousal',
-					  'num_ratings_meanings', 'num_ratings_synonyms', 'multi_word']
+					  'num_ratings_meanings', 'num_ratings_synonyms', 'multi_word',
+					  'Log topic variability', 'Log document frequency',
+					  'Log orthographic neighborhood size', 'Log phonological neighborhood size',
+					  'num_ratings_meanings', 'num_ratings_synonyms',
+					  ]
 
 	d = d[cols_new_order]
 	

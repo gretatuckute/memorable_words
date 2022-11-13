@@ -27,7 +27,9 @@ RESULT_subdirs = ['data_with_preprocessed_cols_used_for_analyses',
 				  '2_monogamous_meanings',
 				  '3_additional_predictors',
 				  '4_stepwise_regression',
-				  'posthoc_bootstrap']
+				  '5_orth_phon_neighborhood',
+				  '6_freq_vs_meanings',
+				  'posthoc_ttest']
 
 RESULT_subfolders = ['cv_all_preds', # cross-validated model performance, across all cross-validation splits
 					 'cv_summary_preds', # summary of cross-validated model performance
@@ -54,6 +56,10 @@ rename_dict_expt1 = {'# meanings (human)': 'num_meanings_human',
 					 'Imageability': 'imageability',
 					 'Valence': 'valence',
 					 'GloVe distinctiveness': 'glove_distinctiveness',
+					 'Log topic variability': 'log_topic_variability',
+					  'Log document frequency': 'log_document_frequency',
+					  'Log orthographic neighborhood size': 'log_orthographic_neighborhood_size',
+					  'Log phonological neighborhood size': 'log_phonological_neighborhood_size',
 					 }
 
 rename_dict_expt2 = {'# meanings (human)': 'num_meanings_human',
@@ -63,7 +69,12 @@ rename_dict_expt2 = {'# meanings (human)': 'num_meanings_human',
 					 'Concreteness': 'concreteness',
 					 'Familiarity': 'familiarity',
 					 'Imageability': 'imageability',
-					 'Valence': 'valence', }
+					 'Valence': 'valence',
+					 'Log topic variability': 'log_topic_variability',
+					 'Log document frequency': 'log_document_frequency',
+					 'Log orthographic neighborhood size': 'log_orthographic_neighborhood_size',
+					 'Log phonological neighborhood size': 'log_phonological_neighborhood_size',
+					 }
 
 rename_dict_expt1_inv = {v: k for k, v in rename_dict_expt1.items()}
 rename_dict_expt2_inv = {v: k for k, v in rename_dict_expt2.items()}
@@ -105,7 +116,7 @@ def create_result_directories(result_dir: str,
 	
 	for subdir in subdirs:
 		# If the subdirectory starts with a number (besides 0 and 1), create subdirectories for output from linear models
-		if subdir[0] in ['2', '3', '4']:  # subdirectories containing model results
+		if subdir[0] in ['2', '3', '4', '5', '6']:  # subdirectories containing model results
 			for subfolder in subfolders:
 				if not os.path.exists(result_dir + subdir + '/' + subfolder):
 					os.makedirs(result_dir + subdir + '/' + subfolder, exist_ok=True)
@@ -226,6 +237,59 @@ def preprocess_columns_in_df(df: pd.DataFrame,
 	
 	return df_preprocessed
 
+def drop_nans_from_df(df: pd.DataFrame,
+					  acc1: pd.DataFrame,
+					  acc2: pd.DataFrame,
+					  predictors: typing.Union[list, np.ndarray]):
+	"""
+	Drop rows or columns with NaNs from dataframe.
+
+	Args:
+		df (pd.DataFrame): dataframe with columns containing y (acc) and predictors (x) as specified in predictors
+        acc1 (pd.DataFrame): accuracy for half of the participants across words
+        acc2 (pd.DataFrame): accuracy for the other half of the participants across words
+        predictors (list): list of predictors (x) to check for NaNs in the df
+
+	Returns:
+		df (pd.DataFrame): dataframe with dropped columns
+		acc1 (pd.DataFrame): accuracy for half of the participants across words, with dropped columns
+		acc2 (pd.DataFrame): accuracy for the other half of the participants across words, with dropped columns
+		nan_info (dict): dictionary with indices and words corresponding to nans in the predictor df.
+
+	"""
+
+	# Check for nans in the df for any of the predictors and return lists of the indices and the nan words
+	if df[predictors].isnull().values.any():
+
+		# Get the indices of the nans of unique rows
+		nan_indices = df[predictors].index[df[predictors].isnull().any(axis=1)].tolist()
+
+		print(f'OBS: Number of nans in the predictors: {len(nan_indices)}\nDropping these rows from the dataframe.\n')
+
+		# Look into which words these nans are
+		nan_words = df.iloc[nan_indices]['word_lower'].values
+		print(f'OBS: Words with nans: {nan_words}')
+
+		# Drop the rows with nans
+		df = df.drop(df.index[nan_indices])
+
+		# Drop for the accuracies as well (columns)
+		acc1 = acc1.drop(acc1.columns[nan_indices], axis=1)
+		acc2 = acc2.drop(acc2.columns[nan_indices], axis=1)
+
+		# Assert than no nan words are in the accuracies
+		assert not acc1.columns.isin(nan_words).any()
+		assert not acc2.columns.isin(nan_words).any()
+
+		nan_info = {'nan_indices': nan_indices, 'nan_words': nan_words}
+
+	else:
+		print('No nans in the predictors')
+		nan_info = {'nan_indices': [], 'nan_words': []}
+
+	return df, acc1, acc2, nan_info
+
+
 
 def get_cv_score(df: pd.DataFrame,
 				 acc1: pd.DataFrame,
@@ -278,6 +342,16 @@ def get_cv_score(df: pd.DataFrame,
 		df_save (pd.DataFrame): dataframe with the CI summary and/or the values per split (1,000 iterations)
 
     """
+
+	# Check for nans in the df for any of the predictors and return lists of the indices and the nan words
+	if df[predictors].isnull().values.any():
+		# Get the indices of the nans
+		nan_indices = np.where(df[predictors].isnull().values)[0]
+
+		print(f'OBS: Number of nans in the predictors: {len(nan_indices)}\nHandle these prior to this function.\n')
+		assert nan_indices == []
+
+
 	# For subject consistency
 	subject_split_half_pearson_r = []
 	subject_split_half_spearman_r = []
@@ -300,7 +374,6 @@ def get_cv_score(df: pd.DataFrame,
 	num_words = acc1.shape[1]
 	num_words_train = int(
 		np.ceil(num_words / 2))  # for expt 1: 2190/2=1054.5, so round up to 1055 for training set, and 1054 for test
-	print(f'Number of splits: {num_subject_splits} with {num_words_train} words in the training set out of {num_words} words')
 
 	np.random.seed(0)
 	
@@ -321,7 +394,11 @@ def get_cv_score(df: pd.DataFrame,
 		# Randomly pick item (word) train/test indices
 		train_words_idxs = np.random.choice(num_words, size=num_words_train, replace=False, )
 		test_words_idxs = np.setdiff1d(np.arange(num_words), train_words_idxs)
-		
+
+		if i == 0:
+			print(f'Number of splits: {num_subject_splits} with train set: {len(train_words_idxs)} words and test set: {len(test_words_idxs)} '
+				  f'out of a total {num_words} words')
+
 		assert (len(np.unique(
 			list(test_words_idxs) + list(train_words_idxs))) == num_words)  # Make sure all words are used
 		assert (len(train_words_idxs) + len(test_words_idxs) == num_words)  # Make sure all words are used
@@ -445,6 +522,9 @@ def get_cv_score(df: pd.DataFrame,
 			df_save['demean_x'] = [demean_x] * len(df_save)
 			df_save['demean_y'] = [demean_y] * len(df_save)
 			df_save['permute'] = [permute] * len(df_save)
+			df_save['n_splits'] = [num_subject_splits] * len(df_save)
+			df_save['n_train_items'] = [len(train_words_idxs)] * len(df_save)
+			df_save['n_test_items'] = [len(test_words_idxs)] * len(df_save)
 			
 			df_save.to_csv(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
 						   f'cv_summary_preds/'
@@ -509,13 +589,13 @@ def compute_acc_metrics_with_error(df: pd.DataFrame,
 								   result_dir: str = '',
 								   save_subfolder: str = None,
 								   save_str: str = None,
-								   error_type: str = 'CI',
+								   error_type: str = 'CI_of_median',
 								   CI: int = 95,
 								   save: bool = False, ):
 	"""
 	Compute accuracy metrics with error.
 	Input dataframe (df), assume that columns 'acc', 'hit.rate', 'false.alarm.rate' are present.
-	If error_type is CI (suggested!), compute the 50% percentile as well as the CI (as specified by CI).
+	If error_type is CI_of_median (suggested!), compute the 50% percentile as well as the CI (as specified by CI).
 	
 	Args:
 		df (pd.DataFrame): dataframe with columns 'acc', 'hit.rate', 'false.alarm.rate'
@@ -526,15 +606,57 @@ def compute_acc_metrics_with_error(df: pd.DataFrame,
 		CI (int): confidence interval
 
 	"""
-	
-	if error_type == 'CI':
-		CI_bound_lower = (100 - CI) / 2
-		CI_bound_upper = 100 - CI_bound_lower
+	CI_bound_lower = (100 - CI) / 2
+	CI_bound_upper = 100 - CI_bound_lower
+
+	if error_type == 'CI_of_the_data':
 		
-		# Get 5%, 50%, 95% CI for accuracy, hit.rate, false.alarm.rate
+		# Get 5%, 50%, 95% CI for accuracy, hit.rate, false.alarm.rate (this takes the percentiles of the data distribution itself, and not around the median)
 		acc_ci = np.percentile(df['acc'], [CI_bound_lower, 50, CI_bound_upper])
 		hit_rate_ci = np.percentile(df['hit_rate'], [CI_bound_lower, 50, CI_bound_upper])
 		fa_rate_ci = np.percentile(df['false_alarm_rate'], [CI_bound_lower, 50, CI_bound_upper])
+
+	elif error_type == 'CI_of_median':
+		# Split data into 2 halves, compute median of each half, and then compute CI around the median of the medians
+		n_bootstraps = 1000
+		bootstrapped_medians_acc = []
+		bootstrapped_medians_hit_rate = []
+		bootstrapped_medians_fa_rate = []
+		for i in range(n_bootstraps):
+			# Split data into 2 halves
+
+			# Accuracy
+			acc_1 = df['acc'].sample(frac=0.5, replace=False)
+			acc_2 = df['acc'].drop(acc_1.index)
+			# Compute median of each half
+			median_acc_1 = np.median(acc_1)
+			median_acc_2 = np.median(acc_2)
+
+			bootstrapped_medians_acc.append([median_acc_1, median_acc_2])
+
+			# Hit rate
+			hit_rate_1 = df['hit_rate'].sample(frac=0.5, replace=False)
+			hit_rate_2 = df['hit_rate'].drop(hit_rate_1.index)
+			# Compute median of each half
+			median_hit_rate_1 = np.median(hit_rate_1)
+			median_hit_rate_2 = np.median(hit_rate_2)
+
+			bootstrapped_medians_hit_rate.append([median_hit_rate_1, median_hit_rate_2])
+
+			# False alarm rate
+			fa_rate_1 = df['false_alarm_rate'].sample(frac=0.5, replace=False)
+			fa_rate_2 = df['false_alarm_rate'].drop(fa_rate_1.index)
+			# Compute median of each half
+			median_fa_rate_1 = np.median(fa_rate_1)
+			median_fa_rate_2 = np.median(fa_rate_2)
+
+			bootstrapped_medians_fa_rate.append([median_fa_rate_1, median_fa_rate_2])
+
+		# Compute CI around the median of the medians
+		acc_ci = np.percentile(bootstrapped_medians_acc, [CI_bound_lower, 50, CI_bound_upper])
+		hit_rate_ci = np.percentile(bootstrapped_medians_hit_rate, [CI_bound_lower, 50, CI_bound_upper])
+		fa_rate_ci = np.percentile(bootstrapped_medians_fa_rate, [CI_bound_lower, 50, CI_bound_upper])
+
 	else:
 		raise ValueError('Error type not recognized')
 	
@@ -584,8 +706,24 @@ def get_split_half_subject_consistency(df: pd.DataFrame,
 									save_subfolder='0_subject_consistency',
 									save=False,
 									predictors=['num_meanings_human'], return_CI_summary_df=False)
-	
-	plt.hist(df_subject_split.subject_split_half_spearman_r.values)
+
+	plt.figure()
+	plt.hist(df_subject_split.subject_split_half_spearman_r.values, bins=20, color='grey')
+	# plt.axvline(x=df_subject_split.subject_split_half_spearman_r.median(), color='red')
+	plt.xlabel('Participant split half Spearman correlation', size=14)
+	plt.ylabel('Split count', size=14)
+	# Make labels and ticks bigger
+	plt.tick_params(axis='both', which='major', labelsize=14)
+	plt.tick_params(axis='both', which='minor', labelsize=14)
+	plt.tight_layout()
+	if save:
+		plt.savefig(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
+					f'subject_split_corr_{date_tag}.svg', dpi=120)
+		plt.savefig(f'{result_dir}/{save_subfolder + "/" if save_subfolder else ""}/'
+					f'subject_split_corr_{date_tag}.png', dpi=120)
+		print(f'Saved subject split half correlation histogram to {result_dir}'
+			  f'{save_subfolder + "/" if save_subfolder else ""}/'
+			  f'subject_split_corr_{date_tag}.png')
 	plt.show()
 	
 	# Manually extract the spearman R among acc1 and acc2 and compute the CI
@@ -1012,6 +1150,80 @@ def bootstrap_wrapper(result_dir: str,
 		print(f'Saved stats file to {result_dir}/'
 			  f'posthoc_boostrap/'
 			  f'boostrap-{n_bootstrap}_{model1}-{model2}_{datetag}.csv')
+
+
+def posthoc_ttest(result_dir: str,
+					  save_subfolder1: str,
+					  save_subfolder2: str,
+					  model1: str,
+					  model2: str,
+					  datetag: str,
+					  demeanx: bool = True,
+					  demeany: bool = True,
+					  val_of_interest: str = 'held_out_subject_set_spearman_r',
+					  save: bool = True, ):
+	"""
+	Function for independent two-sided t-test comparing the Spearman rho values across all 1,000 splits between two models
+
+	Args:
+		save_subfolder1 (str): subfolder to fetch data from for model1
+		save_subfolder2 (str): subfolder to fetch data from for model2
+		model1 (str): name of model1
+		model2 (str): name of model2
+		datetag (str): date tag to append to filename
+		demeanx (bool): whether x was demeaned in analysis (default: True)
+		demeany (bool): whether y was demeaned in analysis (default: True)
+		val_of_interest (str): which value to use for bootstrapping
+		save (bool): whether to save statistics based on bootstrapping to csv
+
+	"""
+
+	# Loop into the save subfolder of interest, and fetch the CV prediction values for model 1 and model 2
+	df_cv_all_model1 = pd.read_csv(f'{result_dir}/'
+								   f'{save_subfolder1}/'
+								   f'cv_all_preds/'
+								   f'df_cv-all_NAME-{model1}_demeanx-{demeanx}_demeany-{demeany}_permute-False_{datetag}.csv')
+
+	df_cv_all_model2 = pd.read_csv(f'{result_dir}/'
+								   f'{save_subfolder2}/'
+								   f'cv_all_preds/'
+								   f'df_cv-all_NAME-{model2}_demeanx-{demeanx}_demeany-{demeany}_permute-False_{datetag}.csv')
+
+
+	t, p = stats.ttest_ind(df_cv_all_model1[val_of_interest].values,
+					df_cv_all_model2[val_of_interest].values)
+
+	# Compute degrees of freedom, e.g., https://vitalflux.com/two-sample-t-test-formula-examples/
+	dof = len(df_cv_all_model1[val_of_interest].values) + len(df_cv_all_model2[val_of_interest].values) - 2
+
+	# Compute Cohen's d, e.g., https://stackoverflow.com/questions/21532471/how-to-calculate-cohens-d-in-python
+	cohens_d = (df_cv_all_model1[val_of_interest].mean() - df_cv_all_model2[val_of_interest].mean()) / np.sqrt(
+		(df_cv_all_model1[val_of_interest].var() + df_cv_all_model2[val_of_interest].var()) / 2)
+
+	# Package
+	df_stats = pd.DataFrame({'model1': model1,
+							 'model2': model2,
+							 # Include median of the two models' val of interest
+							 'model1_true_median': df_cv_all_model1[val_of_interest].median(),
+							 'model2_true_median': df_cv_all_model2[val_of_interest].median(),
+							 't': t,
+							 'p': p,
+							 'dof': dof,
+							 'cohens_d': cohens_d,
+							 'demeanx': demeanx,
+							 'demeany': demeany,
+							 'val_of_interest': val_of_interest,
+							 'datetag': datetag}, index=[0])
+
+	# Save
+	if save:
+		df_stats.to_csv(f'{result_dir}/'
+						f'posthoc_ttest/'
+						f'ttest_{model1}-{model2}_{datetag}.csv')
+		print(f'Saved stats file to {result_dir}/'
+			  f'posthoc_ttest/'
+			  f'ttest_{model1}-{model2}_{datetag}.csv')
+
 
 
 def pairwise_model_comparison_comp_boostrap(model1_val: typing.Union[np.ndarray, list],
