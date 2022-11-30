@@ -14,9 +14,9 @@ conda env create -f environment.yml
 ## Data availability
 The word memorability data is available in /3_PREP_ANALYSES/:
 
-Experiment 1: [*exp1_data_with_norms_reordered_20221010.csv*](https://github.com/gretatuckute/memorable_words/blob/main/3_PREP_ANALYSES/exp1_data_with_norms_reordered_20221010.csv) (2,109 rows according to experimental items as denoted in the columns *word_upper*. The *acc* column contains the word recognition accuracy. Additional columns contain metadata and feature norms)
+Experiment 1: [*exp1_data_with_norms_reordered_20221029.csv*](https://github.com/gretatuckute/memorable_words/blob/main/3_PREP_ANALYSES/exp1_data_with_norms_reordered_20221029.csv) (2,109 rows according to experimental items as denoted in the columns *word_upper*. The *acc* column contains the word recognition accuracy. Additional columns contain metadata and feature norms)
 
-Experiment 2: [*exp2_data_with_norms_reordered_20221010.csv*](https://github.com/gretatuckute/memorable_words/blob/main/3_PREP_ANALYSES/exp2_data_with_norms_reordered_20221010.csv) (2,165 rows according to experimental items as denoted in the columns *word_upper*. The *acc* column contains the word recognition accuracy. Additional columns contain metadata and feature norms)
+Experiment 2: [*exp2_data_with_norms_reordered_20221029.csv*](https://github.com/gretatuckute/memorable_words/blob/main/3_PREP_ANALYSES/exp2_data_with_norms_reordered_20221029.csv) (2,165 rows according to experimental items as denoted in the columns *word_upper*. The *acc* column contains the word recognition accuracy. Additional columns contain metadata and feature norms)
 
 ## Analyses
 To analyze respectively Experiment 1 and Experiment 2, run [/4_ANALYZE/analyze_expt1.py](https://github.com/gretatuckute/memorable_words/blob/main/4_ANALYZE/analyze_expt1.py) and [/4_ANALYZE/analyze_expt2.py](https://github.com/gretatuckute/memorable_words/blob/main/4_ANALYZE/analyze_expt2.py).
