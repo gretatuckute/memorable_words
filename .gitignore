@@ -6,7 +6,7 @@ figure_compilation/**
 expt1_expt2_results/**
 expt1_results/**
 expt2_results/**
-
+3_PREP_ANALYSES/exp1_pos_tags/*.txt
 
 
 # Byte-compiled / optimized / DLL files
