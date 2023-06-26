@@ -29,6 +29,7 @@ RESULT_subdirs = ['data_with_preprocessed_cols_used_for_analyses',
 				  '4_stepwise_regression',
 				  '5_orth_phon_neighborhood',
 				  '6_freq_vs_meanings',
+				  '7_pos_category',
 				  'posthoc_ttest']
 
 RESULT_subfolders = ['cv_all_preds', # cross-validated model performance, across all cross-validation splits
@@ -116,7 +117,7 @@ def create_result_directories(result_dir: str,
 	
 	for subdir in subdirs:
 		# If the subdirectory starts with a number (besides 0 and 1), create subdirectories for output from linear models
-		if subdir[0] in ['2', '3', '4', '5', '6']:  # subdirectories containing model results
+		if subdir[0] in ['2', '3', '4', '5', '6', '7']:  # subdirectories containing model results
 			for subfolder in subfolders:
 				if not os.path.exists(result_dir + subdir + '/' + subfolder):
 					os.makedirs(result_dir + subdir + '/' + subfolder, exist_ok=True)
@@ -427,10 +428,23 @@ def get_cv_score(df: pd.DataFrame,
 		X_test = df[predictors].iloc[test_words_idxs]
 		
 		if demean_x:
-			scaler_x = StandardScaler(with_std=False).fit(X_train)  # fit demeaning transform on train data only
-			X_train = scaler_x.transform(X_train)  # demeans column-wise
-			X_test = scaler_x.transform(X_test)  # Use same demeaning transform as estimated from the training set
-		
+			# Check if there is a categorical variable in the predictors
+			if any(X_train.dtypes == 'object'):
+				# Get the categorical variables
+				categorical_vars = X_train.columns[X_train.dtypes == 'object'].tolist()
+				# Get the non-categorical variables
+				non_categorical_vars = X_train.columns[X_train.dtypes != 'object'].tolist()
+
+				# Demean the non-categorical variables
+				scaler_x = StandardScaler(with_std=False).fit(X_train[non_categorical_vars])
+				X_train[non_categorical_vars] = scaler_x.transform(X_train[non_categorical_vars])
+				X_test[non_categorical_vars] = scaler_x.transform(X_test[non_categorical_vars])
+
+			else:
+				scaler_x = StandardScaler(with_std=False).fit(X_train)  # fit demeaning transform on train data only
+				X_train = scaler_x.transform(X_train)  # demeans column-wise
+				X_test = scaler_x.transform(X_test)  # Use same demeaning transform as estimated from the training set
+
 		y_train_s1 = s1_train.values  # the accuracies for half of subjects (s1)
 		# y_train_s2 = s2_train.values  # the accuracies for half of subjects (s2)
 		y_test_s1 = s1_test.values  # within-subject split (test words)
@@ -469,7 +483,14 @@ def get_cv_score(df: pd.DataFrame,
 		else:
 			pred = model.predict(X_test)
 			pred_train = model.predict(X_train)
-		
+
+		# plot predicted vs actual
+		# plt.scatter(y_test_s1, pred)
+		# plt.xlabel('Actual')
+		# plt.ylabel('Predicted')
+		# plt.title(f'Predicted vs Actual, {model_name}')
+		# plt.show()
+
 		# Predict on the same set of subjects [WITHIN], but different words
 		r_pearson_within_subject, p_pearson_within_subject = pearsonr(pred, y_test_s1.ravel())
 		r_spearman_within_subject, p_spearman_within_subject = spearmanr(pred, y_test_s1.ravel())
