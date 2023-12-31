@@ -1,0 +1,26 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:             acc_demean   R-squared:                       0.100
+Model:                            OLS   Adj. R-squared:                  0.099
+Method:                 Least Squares   F-statistic:                     116.4
+Date:                Sat, 29 Oct 2022   Prob (F-statistic):           1.11e-48
+Time:                        10:10:44   Log-Likelihood:                 3085.4
+No. Observations:                2109   AIC:                            -6165.
+Df Residuals:                    2106   BIC:                            -6148.
+Df Model:                           2                                         
+Covariance Type:            nonrobust                                         
+===============================================================================================
+                                  coef    std err          t      P>|t|      [0.025      0.975]
+-----------------------------------------------------------------------------------------------
+Intercept                   -7.915e-18      0.001  -6.48e-15      1.000      -0.002       0.002
+num_meanings_wordnet_demean    -0.0029      0.001     -4.177      0.000      -0.004      -0.002
+num_synonyms_wordnet_demean    -0.0006      0.000     -2.342      0.019      -0.001   -9.66e-05
+==============================================================================
+Omnibus:                       13.357   Durbin-Watson:                   0.673
+Prob(Omnibus):                  0.001   Jarque-Bera (JB):               12.451
+Skew:                          -0.150   Prob(JB):                      0.00198
+Kurtosis:                       2.772   Cond. No.                         12.2
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

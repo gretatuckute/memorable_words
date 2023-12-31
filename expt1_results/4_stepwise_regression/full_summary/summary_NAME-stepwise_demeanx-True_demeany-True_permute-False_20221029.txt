@@ -1,0 +1,32 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:             acc_demean   R-squared:                       0.442
+Model:                            OLS   Adj. R-squared:                  0.440
+Method:                 Least Squares   F-statistic:                     207.8
+Date:                Sat, 29 Oct 2022   Prob (F-statistic):          2.01e-259
+Time:                        10:33:09   Log-Likelihood:                 3589.8
+No. Observations:                2109   AIC:                            -7162.
+Df Residuals:                    2100   BIC:                            -7111.
+Df Model:                           8                                         
+Covariance Type:            nonrobust                                         
+=================================================================================================
+                                    coef    std err          t      P>|t|      [0.025      0.975]
+-------------------------------------------------------------------------------------------------
+Intercept                     -4.564e-17      0.001  -4.74e-14      1.000      -0.002       0.002
+num_synonyms_human_demean        -0.0143      0.001    -10.973      0.000      -0.017      -0.012
+google_ngram_frequency_demean    -0.0078      0.001     -9.296      0.000      -0.009      -0.006
+imageability_demean               0.0175      0.001     15.031      0.000       0.015       0.020
+familiarity_demean               -0.0168      0.003     -6.729      0.000      -0.022      -0.012
+num_meanings_wordnet_demean      -0.0017      0.000     -6.167      0.000      -0.002      -0.001
+log_subtlex_frequency_demean      0.0362      0.006      5.624      0.000       0.024       0.049
+log_subtlex_cd_demean            -0.0283      0.008     -3.714      0.000      -0.043      -0.013
+num_meanings_human_demean        -0.0101      0.004     -2.749      0.006      -0.017      -0.003
+==============================================================================
+Omnibus:                        1.340   Durbin-Watson:                   1.145
+Prob(Omnibus):                  0.512   Jarque-Bera (JB):                1.340
+Skew:                           0.062   Prob(JB):                        0.512
+Kurtosis:                       2.991   Cond. No.                         44.8
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

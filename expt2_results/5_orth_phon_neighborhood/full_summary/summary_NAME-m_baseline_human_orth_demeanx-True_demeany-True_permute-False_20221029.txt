@@ -1,0 +1,27 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:             acc_demean   R-squared:                       0.445
+Model:                            OLS   Adj. R-squared:                  0.445
+Method:                 Least Squares   F-statistic:                     459.5
+Date:                Sat, 29 Oct 2022   Prob (F-statistic):          4.16e-219
+Time:                        10:54:39   Log-Likelihood:                 2686.1
+No. Observations:                1720   AIC:                            -5364.
+Df Residuals:                    1716   BIC:                            -5342.
+Df Model:                           3                                         
+Covariance Type:            nonrobust                                         
+=============================================================================================================
+                                                coef    std err          t      P>|t|      [0.025      0.975]
+-------------------------------------------------------------------------------------------------------------
+Intercept                                    -0.0014      0.001     -1.102      0.271      -0.004       0.001
+num_meanings_human_demean                    -0.0147      0.004     -3.270      0.001      -0.024      -0.006
+num_synonyms_human_demean                    -0.0355      0.001    -29.681      0.000      -0.038      -0.033
+log_orthographic_neighborhood_size_demean     0.0032      0.001      2.493      0.013       0.001       0.006
+==============================================================================
+Omnibus:                       17.028   Durbin-Watson:                   2.020
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):               19.823
+Skew:                           0.172   Prob(JB):                     4.96e-05
+Kurtosis:                       3.398   Cond. No.                         4.59
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

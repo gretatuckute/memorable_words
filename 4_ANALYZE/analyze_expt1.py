@@ -8,8 +8,9 @@ Q3 = False # models for baseline + ONE additional predictor
 Q4 = False # forward-backward selection
 Q5 = False # orthographic/phonological neighborhood
 Q6 = False # disambiguate frequency vs meaning
+Q7 = True # syntactic POS categories
 
-posthoc_stats = True
+posthoc_stats = False
 
 save = True
 np.random.seed(0)
@@ -63,9 +64,10 @@ if __name__ == '__main__':
 	# Merge with original df (this df contains all the preprocessed predictors)
 	df = pd.concat([df_renamed, df_demeaned, df_zscored], axis=1)
 	if save:
+		add_savestr = f'add-analyses-2023' # Allow to store the data just used for some analyses (in this case, Q7 run in 2023)
 		df.to_csv(f'{RESULTDIR}/'
 				  f'data_with_preprocessed_cols_used_for_analyses/'
-				  f'{fname.split("/")[-1].split(".")[0]}_preprocessed_cols.csv')
+				  f'{fname.split("/")[-1].split(".")[0]}_preprocessed_cols{add_savestr}.csv')
 
 	#### RUN MODELS ####
 
@@ -709,17 +711,135 @@ if __name__ == '__main__':
 					f'across-models_df_cv_NAME-freq-bins-{freq_metric}_'
 					f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
 
+	## Q7: Syntactic POS category ##
+	if Q7:
+		save_subfolder = '7_pos_category'
+
+		# Get overall memorability accuracy per pos_category
+		df_pos_mean = df.groupby('pos_category').mean()
+		# suffix _mean to column names
+		df_pos_mean.columns = [f'{col}_mean' for col in df_pos_mean.columns]
+		# Also get std; merge for saving
+		df_pos_std = df.groupby('pos_category').std()
+		# suffix _std to column names
+		df_pos_std.columns = [f'{col}_std' for col in df_pos_std.columns]
+		df_pos_grouped = pd.concat([df_pos_mean, df_pos_std], axis=1)
+
+		if save:
+			df_pos_grouped.to_csv(f'{RESULTDIR}/{save_subfolder}/full_summary/'
+								  f'summary_stats_pos_category_{date_tag}.csv')
+
+			# Make simple bar plot of mean memorability per pos category (with error bars)
+			# Order: ADJ, NOUN, VERB, ADV, OTHER
+			df_pos_grouped = df_pos_grouped.reindex(['ADJ', 'NOUN', 'VERB', 'ADV', 'OTHER'])
+
+			plt.figure(figsize=(6, 6))
+			df_pos_grouped['acc_mean'].plot(kind='bar', yerr=df_pos_grouped['acc_std'], capsize=0)
+			plt.ylabel('Accuracy')
+			plt.xlabel('POS category')
+			plt.ylim(0, 1)
+			plt.title('Experiment 1: Mean memorability accuracy per POS category')
+			plt.tight_layout()
+			plt.savefig(f'{RESULTDIR}/{save_subfolder}/full_summary/'
+					 	f'barplot_pos_category_{date_tag}.png')
+			plt.show()
 
 
 
+		# The model below is weird if we use pearson/spearman to evaluate predictions vs ground truth (categorical)
+		# df_pos = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
+		# 								 model_name='pos_category',
+		# 								 predictors=['pos_category'], save_subfolder=save_subfolder,
+		# 								 demean_x=False, # categorical
+		# 								 demean_y=True,
+		# 								 formula='C(pos_category)')
 
+		df_baseline_pos = get_cv_score(df=df, acc1=acc1, acc2=acc2, save=save, result_dir=RESULTDIR,
+										 model_name='baseline_pos_category',
+										 predictors=['num_meanings_human', 'num_synonyms_human', 'pos_category'],
+									     save_subfolder=save_subfolder,
+										 formula='num_meanings_human + num_synonyms_human + C(pos_category)')
 
+		if save:  # store the concatenated results across all baseline models
+			df_baseline_pos.to_csv(
+				f'{RESULTDIR}/{save_subfolder}/'
+				f'cv_summary_preds/'
+				f'across-models_df_cv_NAME-baseline-pos_'
+				f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
 
+		# Fit models on the full dataset for model statistics
+		# HUMAN
+		m_baseline_human = smf.ols('acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean',
+								   data=df).fit()
 
+		m_pos = smf.ols('acc_demean ~ C(pos_category)',
+								   data=df).fit()
 
+		m_baseline_pos = smf.ols('acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + C(pos_category)',
+								   data=df).fit()
 
+		m_pos_meanings = smf.ols('acc_demean ~ num_meanings_human_demean + C(pos_category)',
+								   data=df).fit()
+		m_pos_synonyms = smf.ols('acc_demean ~ num_synonyms_human_demean + C(pos_category)',
+								   data=df).fit()
 
+		## ANOVA COMPARISON WITH BASELINE MODELS ##
 
+		# HUMAN
+		# Compare Mem ~ synonyms + meanings WITH Mem ~ synonyms + meanings + pos
+		comp_baseline_human_pos = sm.stats.anova_lm(m_baseline_human, m_baseline_pos)
+		comp_baseline_human_pos['model'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean'
+		comp_baseline_human_pos[
+			'model_add_predictor'] = 'acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + C(pos_category)'
+
+		# Compare Mem ~ pos WITH Mem ~ meanings + pos
+		comp_pos_meanings = sm.stats.anova_lm(m_pos, m_pos_meanings)
+		comp_pos_meanings['model'] = 'acc_demean ~ pos_category'
+		comp_pos_meanings[
+			'model_add_predictor'] = 'acc_demean ~ pos_category + num_meanings_human_demean'
+
+		# Compare Mem ~ pos WITH Mem ~ synonyms + pos
+		comp_pos_synonyms = sm.stats.anova_lm(m_pos, m_pos_synonyms)
+		comp_pos_synonyms['model'] = 'acc_demean ~ pos_category'
+		comp_pos_synonyms[
+			'model_add_predictor'] = 'acc_demean ~ pos_category + num_synonyms_human_demean'
+
+		# Package the ANOVA model comparisons into one df
+		df_comp_anova = pd.concat([comp_baseline_human_pos, comp_pos_meanings, comp_pos_synonyms], axis=0)
+
+		# Create 'comparison_index' column (two rows per comparison, so repeat the index twice)
+		df_comp_anova['comparison_index'] = (np.repeat(np.arange(len(df_comp_anova) / 2), 2))
+
+		# Reorganize columns: comparison_index, model, model_add_predictor, F, Pr(>F), ss_diff, df_diff, ssr
+		df_comp_anova = df_comp_anova[
+			['comparison_index', 'model', 'model_add_predictor', 'F', 'Pr(>F)', 'ss_diff', 'df_diff', 'ssr']]
+
+		if save:
+			df_comp_anova.to_csv(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_comp_anova_'
+								 f'NAME-baseline-pos_'
+								 f'demeanx-True_demeany-True_permute-False_{date_tag}.csv')
+
+			# Log
+			# HUMAN
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_baseline_human_'
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_baseline_human.summary().as_text())
+
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_pos_'
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_pos.summary().as_text())
+
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_baseline_pos_'
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_baseline_pos.summary().as_text())
+
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_pos_meanings_'
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_pos_meanings.summary().as_text())
+
+			with open(f'{RESULTDIR}/{save_subfolder}/full_summary/summary_NAME-m_pos_synonyms_'
+					  f'demeanx-True_demeany-True_permute-False_{date_tag}.txt', 'w') as fh:
+				fh.write(m_pos_synonyms.summary().as_text())
 
 
 

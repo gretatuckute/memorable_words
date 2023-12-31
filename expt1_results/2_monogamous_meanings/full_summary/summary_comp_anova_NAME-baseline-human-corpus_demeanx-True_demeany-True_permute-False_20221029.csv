@@ -1,0 +1,9 @@
+,comparison_index,model,model_add_predictor,F,Pr(>F),ss_diff,df_diff,ssr
+0,0.0,acc_demean ~ num_meanings_human_demean,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean,,,,0.0,6.949666559971773
+1,0.0,acc_demean ~ num_meanings_human_demean,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean,651.2371009787571,2.1641218351619145e-125,1.6414550281796378,1.0,5.308211531792135
+0,1.0,acc_demean ~ num_synonyms_human_demean,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean,,,,0.0,5.359553489320895
+1,1.0,acc_demean ~ num_synonyms_human_demean,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean,20.369603190825323,6.735526731269434e-06,0.05134195752876014,1.0,5.308211531792135
+0,2.0,acc_demean ~ num_meanings_wordnet_demean,acc_demean ~ num_meanings_wordnet_demean + num_synonyms_wordnet_demean,,,,0.0,6.637637812550733
+1,2.0,acc_demean ~ num_meanings_wordnet_demean,acc_demean ~ num_meanings_wordnet_demean + num_synonyms_wordnet_demean,5.486472878933243,0.0192568588639901,0.017247195426778106,1.0,6.620390617123955
+0,3.0,acc_demean ~ num_synonyms_wordnet_demean,acc_demean ~ num_meanings_wordnet_demean + num_synonyms_wordnet_demean,,,,0.0,6.6752460572622265
+1,3.0,acc_demean ~ num_synonyms_wordnet_demean,acc_demean ~ num_meanings_wordnet_demean + num_synonyms_wordnet_demean,17.44996082744535,3.0700638328337854e-05,0.05485544013827148,1.0,6.620390617123955

@@ -1,0 +1,7 @@
+\begin{tabular}{llll}
+\hline
+ Expt   & Low frequency bin        & Mid frequency bin        & High frequency bin       \\
+\hline
+ Expt 1 & 0.46 [95\% CI 0.39, 0.53] & 0.45 [95\% CI 0.37, 0.52] & 0.51 [95\% CI 0.44, 0.58] \\
+\hline
+\end{tabular}

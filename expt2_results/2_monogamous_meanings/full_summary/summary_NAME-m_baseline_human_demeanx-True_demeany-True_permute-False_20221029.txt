@@ -1,0 +1,26 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:             acc_demean   R-squared:                       0.428
+Model:                            OLS   Adj. R-squared:                  0.428
+Method:                 Least Squares   F-statistic:                     809.1
+Date:                Sat, 29 Oct 2022   Prob (F-statistic):          4.79e-263
+Time:                        10:42:04   Log-Likelihood:                 3389.0
+No. Observations:                2165   AIC:                            -6772.
+Df Residuals:                    2162   BIC:                            -6755.
+Df Model:                           2                                         
+Covariance Type:            nonrobust                                         
+=============================================================================================
+                                coef    std err          t      P>|t|      [0.025      0.975]
+---------------------------------------------------------------------------------------------
+Intercept                  6.485e-18      0.001   5.96e-15      1.000      -0.002       0.002
+num_meanings_human_demean    -0.0137      0.004     -3.447      0.001      -0.021      -0.006
+num_synonyms_human_demean    -0.0347      0.001    -32.761      0.000      -0.037      -0.033
+==============================================================================
+Omnibus:                       13.495   Durbin-Watson:                   2.022
+Prob(Omnibus):                  0.001   Jarque-Bera (JB):               15.082
+Skew:                           0.135   Prob(JB):                     0.000531
+Kurtosis:                       3.306   Cond. No.                         4.44
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

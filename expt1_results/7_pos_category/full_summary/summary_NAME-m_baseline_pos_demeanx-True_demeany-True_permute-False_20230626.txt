@@ -1,0 +1,30 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:             acc_demean   R-squared:                       0.304
+Model:                            OLS   Adj. R-squared:                  0.302
+Method:                 Least Squares   F-statistic:                     153.3
+Date:                Mon, 26 Jun 2023   Prob (F-statistic):          1.19e-161
+Time:                        12:39:10   Log-Likelihood:                 3357.5
+No. Observations:                2109   AIC:                            -6701.
+Df Residuals:                    2102   BIC:                            -6661.
+Df Model:                           6                                         
+Covariance Type:            nonrobust                                         
+=============================================================================================
+                                coef    std err          t      P>|t|      [0.025      0.975]
+---------------------------------------------------------------------------------------------
+Intercept                    -0.0064      0.005     -1.399      0.162      -0.015       0.003
+C(pos_category)[T.ADV]       -0.0176      0.008     -2.172      0.030      -0.033      -0.002
+C(pos_category)[T.NOUN]       0.0107      0.005      2.248      0.025       0.001       0.020
+C(pos_category)[T.OTHER]     -0.0196      0.013     -1.531      0.126      -0.045       0.006
+C(pos_category)[T.VERB]      -0.0195      0.006     -3.389      0.001      -0.031      -0.008
+num_meanings_human_demean    -0.0180      0.003     -5.275      0.000      -0.025      -0.011
+num_synonyms_human_demean    -0.0263      0.001    -22.617      0.000      -0.029      -0.024
+==============================================================================
+Omnibus:                        8.228   Durbin-Watson:                   0.919
+Prob(Omnibus):                  0.016   Jarque-Bera (JB):                9.394
+Skew:                           0.081   Prob(JB):                      0.00912
+Kurtosis:                       3.284   Cond. No.                         16.7
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

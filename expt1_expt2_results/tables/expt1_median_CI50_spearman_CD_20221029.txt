@@ -1,0 +1,7 @@
+\begin{tabular}{ll}
+\hline
+ Expt   & Log Subtlex CD           \\
+\hline
+ Expt 1 & 0.23 [95\% CI 0.18, 0.28] \\
+\hline
+\end{tabular}

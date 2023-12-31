@@ -1,0 +1,2 @@
+,model1,model2,model1_true_median,model2_true_median,t,p,dof,cohens_d,demeanx,demeany,val_of_interest,datetag
+0,baseline_human_no_nans_topic,topicvar,0.5187849094601065,0.44817772585784765,61.57335217656211,0.0,1998,2.7536440213865503,True,True,held_out_subject_set_spearman_r,20221029
