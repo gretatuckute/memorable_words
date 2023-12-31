@@ -3,11 +3,16 @@ data/.DS_Store
 .idea
 
 figure_compilation/**
-expt1_expt2_results/**
-expt1_results/**
-expt2_results/**
 3_PREP_ANALYSES/exp1_pos_tags/*.txt
-
+**/*.png
+**/*.svg
+# Ignore CSV files ending with _20220708 (former run of results) 
+expt1_expt2_results/**/*_20220708.csv
+expt1_results/**/*_20220708.csv
+expt2_results/**/*_20220708.csv
+expt1_expt2_results/**/*_20220708.txt
+expt1_results/**/*_20220708.txt
+expt2_results/**/*_20220708.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

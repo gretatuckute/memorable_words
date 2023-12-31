@@ -1,0 +1,5 @@
+,comparison_index,model,model_add_predictor,F,Pr(>F),ss_diff,df_diff,ssr
+0,0.0,acc_demean ~ num_meanings_human_demean,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean,,,,0.0,8.28647306815146
+1,0.0,acc_demean ~ num_meanings_human_demean,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean,1073.258297108359,1.7421120551569195e-191,2.7489384640810473,1.0,5.537534604070413
+0,1.0,acc_demean ~ num_synonyms_human_demean,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean,,,,0.0,5.56796367190033
+1,1.0,acc_demean ~ num_synonyms_human_demean,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean,11.880313054824422,0.000578147545600878,0.030429067829916612,1.0,5.537534604070413

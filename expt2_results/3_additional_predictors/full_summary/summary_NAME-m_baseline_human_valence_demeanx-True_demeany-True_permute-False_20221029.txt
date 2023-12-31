@@ -1,0 +1,27 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:             acc_demean   R-squared:                       0.429
+Model:                            OLS   Adj. R-squared:                  0.428
+Method:                 Least Squares   F-statistic:                     540.6
+Date:                Sat, 29 Oct 2022   Prob (F-statistic):          4.64e-262
+Time:                        10:48:29   Log-Likelihood:                 3390.2
+No. Observations:                2165   AIC:                            -6772.
+Df Residuals:                    2161   BIC:                            -6750.
+Df Model:                           3                                         
+Covariance Type:            nonrobust                                         
+=============================================================================================
+                                coef    std err          t      P>|t|      [0.025      0.975]
+---------------------------------------------------------------------------------------------
+Intercept                  7.623e-18      0.001   7.01e-15      1.000      -0.002       0.002
+num_meanings_human_demean    -0.0129      0.004     -3.234      0.001      -0.021      -0.005
+num_synonyms_human_demean    -0.0351      0.001    -32.279      0.000      -0.037      -0.033
+valence_demean               -0.0024      0.002     -1.549      0.121      -0.005       0.001
+==============================================================================
+Omnibus:                       14.444   Durbin-Watson:                   2.022
+Prob(Omnibus):                  0.001   Jarque-Bera (JB):               16.311
+Skew:                           0.139   Prob(JB):                     0.000287
+Kurtosis:                       3.322   Cond. No.                         4.52
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

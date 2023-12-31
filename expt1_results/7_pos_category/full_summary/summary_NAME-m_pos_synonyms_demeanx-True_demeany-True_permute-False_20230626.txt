@@ -1,0 +1,29 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:             acc_demean   R-squared:                       0.295
+Model:                            OLS   Adj. R-squared:                  0.293
+Method:                 Least Squares   F-statistic:                     176.1
+Date:                Mon, 26 Jun 2023   Prob (F-statistic):          8.08e-157
+Time:                        12:39:10   Log-Likelihood:                 3343.6
+No. Observations:                2109   AIC:                            -6675.
+Df Residuals:                    2103   BIC:                            -6641.
+Df Model:                           5                                         
+Covariance Type:            nonrobust                                         
+=============================================================================================
+                                coef    std err          t      P>|t|      [0.025      0.975]
+---------------------------------------------------------------------------------------------
+Intercept                    -0.0040      0.005     -0.883      0.377      -0.013       0.005
+C(pos_category)[T.ADV]       -0.0175      0.008     -2.151      0.032      -0.033      -0.002
+C(pos_category)[T.NOUN]       0.0080      0.005      1.687      0.092      -0.001       0.017
+C(pos_category)[T.OTHER]     -0.0211      0.013     -1.633      0.103      -0.046       0.004
+C(pos_category)[T.VERB]      -0.0214      0.006     -3.687      0.000      -0.033      -0.010
+num_synonyms_human_demean    -0.0283      0.001    -25.408      0.000      -0.030      -0.026
+==============================================================================
+Omnibus:                       11.163   Durbin-Watson:                   0.924
+Prob(Omnibus):                  0.004   Jarque-Bera (JB):               12.759
+Skew:                           0.110   Prob(JB):                      0.00170
+Kurtosis:                       3.311   Cond. No.                         16.7
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.

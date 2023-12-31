@@ -1,0 +1,7 @@
+,comparison_index,model,model_add_predictor,F,Pr(>F),ss_diff,df_diff,ssr
+0,0.0,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + C(pos_category),,,,0.0,5.308211531792135
+1,0.0,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean,acc_demean ~ num_meanings_human_demean + num_synonyms_human_demean + C(pos_category),19.872597708003244,4.483486365550273e-16,0.19342363874462176,4.0,5.114787893047513
+0,1.0,acc_demean ~ pos_category,acc_demean ~ pos_category + num_meanings_human_demean,,,,0.0,6.7733731156342785
+1,1.0,acc_demean ~ pos_category,acc_demean ~ pos_category + num_meanings_human_demean,136.8496530139557,1.134220196060728e-30,0.41383749099468314,1.0,6.359535624639595
+0,2.0,acc_demean ~ pos_category,acc_demean ~ pos_category + num_synonyms_human_demean,,,,0.0,6.7733731156342785
+1,2.0,acc_demean ~ pos_category,acc_demean ~ pos_category + num_synonyms_human_demean,645.5627799693513,1.9965279915645307e-124,1.5908814636379853,1.0,5.182491651996293

@@ -1,0 +1,9 @@
+,predictor,count_included,count_included_first
+0,num_meanings_human,9.0,0.0
+1,num_synonyms_human,1000.0,1000.0
+2,google_ngram_frequency,1000.0,0.0
+3,arousal,304.0,0.0
+4,concreteness,23.0,0.0
+5,familiarity,63.0,0.0
+6,imageability,973.0,0.0
+7,valence,80.0,0.0

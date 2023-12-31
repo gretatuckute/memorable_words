@@ -1,0 +1,33 @@
+,model,count,num_meanings_human_included,num_meanings_human_included_first,num_synonyms_human_included,num_synonyms_human_included_first,google_ngram_frequency_included,google_ngram_frequency_included_first,arousal_included,arousal_included_first,concreteness_included,concreteness_included_first,familiarity_included,familiarity_included_first,imageability_included,imageability_included_first,valence_included,valence_included_first
+0,"['num_synonyms_human', 'google_ngram_frequency', 'imageability']",515,False,False,True,True,True,False,False,False,False,False,False,False,True,False,False,False
+1,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'arousal']",192,False,False,True,True,True,False,True,False,False,False,False,False,True,False,False,False
+2,"['num_synonyms_human', 'imageability', 'google_ngram_frequency']",59,False,False,True,True,True,False,False,False,False,False,False,False,True,False,False,False
+3,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'valence']",42,False,False,True,True,True,False,False,False,False,False,False,False,True,False,True,False
+4,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'familiarity']",36,False,False,True,True,True,False,False,False,False,False,True,False,True,False,False,False
+5,"['num_synonyms_human', 'google_ngram_frequency', 'arousal', 'imageability']",32,False,False,True,True,True,False,True,False,False,False,False,False,True,False,False,False
+6,"['num_synonyms_human', 'imageability', 'google_ngram_frequency', 'arousal']",18,False,False,True,True,True,False,True,False,False,False,False,False,True,False,False,False
+7,"['num_synonyms_human', 'google_ngram_frequency', 'arousal']",16,False,False,True,True,True,False,True,False,False,False,False,False,False,False,False,False
+8,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'valence', 'arousal']",14,False,False,True,True,True,False,True,False,False,False,False,False,True,False,True,False
+9,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'concreteness']",10,False,False,True,True,True,False,False,False,True,False,False,False,True,False,False,False
+10,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'arousal', 'valence']",10,False,False,True,True,True,False,True,False,False,False,False,False,True,False,True,False
+11,"['num_synonyms_human', 'imageability', 'google_ngram_frequency', 'valence']",7,False,False,True,True,True,False,False,False,False,False,False,False,True,False,True,False
+12,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'familiarity', 'arousal']",7,False,False,True,True,True,False,True,False,False,False,True,False,True,False,False,False
+13,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'arousal', 'familiarity']",6,False,False,True,True,True,False,True,False,False,False,True,False,True,False,False,False
+14,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'num_meanings_human']",5,True,False,True,True,True,False,False,False,False,False,False,False,True,False,False,False
+15,"['num_synonyms_human', 'google_ngram_frequency', 'concreteness']",5,False,False,True,True,True,False,False,False,True,False,False,False,False,False,False,False
+16,"['num_synonyms_human', 'imageability', 'google_ngram_frequency', 'familiarity']",5,False,False,True,True,True,False,False,False,False,False,True,False,True,False,False,False
+17,"['num_synonyms_human', 'google_ngram_frequency', 'arousal', 'concreteness']",3,False,False,True,True,True,False,True,False,True,False,False,False,False,False,False,False
+18,"['num_synonyms_human', 'google_ngram_frequency']",3,False,False,True,True,True,False,False,False,False,False,False,False,False,False,False,False
+19,"['num_synonyms_human', 'imageability', 'google_ngram_frequency', 'valence', 'arousal']",2,False,False,True,True,True,False,True,False,False,False,False,False,True,False,True,False
+20,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'familiarity', 'concreteness']",2,False,False,True,True,True,False,False,False,True,False,True,False,True,False,False,False
+21,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'familiarity', 'arousal', 'valence']",1,False,False,True,True,True,False,True,False,False,False,True,False,True,False,True,False
+22,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'arousal', 'valence', 'familiarity']",1,False,False,True,True,True,False,True,False,False,False,True,False,True,False,True,False
+23,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'familiarity', 'concreteness', 'num_meanings_human']",1,True,False,True,True,True,False,False,False,True,False,True,False,True,False,False,False
+24,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'familiarity', 'num_meanings_human']",1,True,False,True,True,True,False,False,False,False,False,True,False,True,False,False,False
+25,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'num_meanings_human', 'valence']",1,True,False,True,True,True,False,False,False,False,False,False,False,True,False,True,False
+26,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'valence', 'concreteness']",1,False,False,True,True,True,False,False,False,True,False,False,False,True,False,True,False
+27,"['num_synonyms_human', 'google_ngram_frequency', 'imageability', 'valence', 'familiarity']",1,False,False,True,True,True,False,False,False,False,False,True,False,True,False,True,False
+28,"['num_synonyms_human', 'google_ngram_frequency', 'arousal', 'imageability', 'familiarity']",1,False,False,True,True,True,False,True,False,False,False,True,False,True,False,False,False
+29,"['num_synonyms_human', 'imageability', 'google_ngram_frequency', 'concreteness']",1,False,False,True,True,True,False,False,False,True,False,False,False,True,False,False,False
+30,"['num_synonyms_human', 'imageability', 'google_ngram_frequency', 'familiarity', 'arousal']",1,False,False,True,True,True,False,True,False,False,False,True,False,True,False,False,False
+31,"['num_synonyms_human', 'imageability', 'google_ngram_frequency', 'num_meanings_human']",1,True,False,True,True,True,False,False,False,False,False,False,False,True,False,False,False

@@ -1,0 +1,25 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:             acc_demean   R-squared:                       0.003
+Model:                            OLS   Adj. R-squared:                  0.003
+Method:                 Least Squares   F-statistic:                     5.794
+Date:                Sat, 29 Oct 2022   Prob (F-statistic):             0.0162
+Time:                        10:33:59   Log-Likelihood:                 2664.5
+No. Observations:                1873   AIC:                            -5325.
+Df Residuals:                    1871   BIC:                            -5314.
+Df Model:                           1                                         
+Covariance Type:            nonrobust                                         
+=============================================================================================================
+                                                coef    std err          t      P>|t|      [0.025      0.975]
+-------------------------------------------------------------------------------------------------------------
+Intercept                                    -0.0023      0.001     -1.699      0.090      -0.005       0.000
+log_phonological_neighborhood_size_demean    -0.0029      0.001     -2.407      0.016      -0.005      -0.001
+==============================================================================
+Omnibus:                       27.566   Durbin-Watson:                   0.530
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):               19.954
+Skew:                          -0.145   Prob(JB):                     4.64e-05
+Kurtosis:                       2.586   Cond. No.                         1.14
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
